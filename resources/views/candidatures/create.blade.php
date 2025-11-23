@@ -28,9 +28,6 @@
                         </div>
                         <div class="col-md-6">
                             <p class="mb-1"><strong>Niveau requis:</strong> {{ $offre->niveau_etude }}</p>
-                            @if($offre->remuneration)
-                                <p class="mb-1"><strong>Rémunération:</strong> {{ $offre->remuneration }}€/mois</p>
-                            @endif
                             @if($offre->lieu)
                                 <p class="mb-1"><strong>Lieu:</strong> {{ $offre->lieu }}</p>
                             @endif
@@ -38,7 +35,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('candidatures.store') }}">
+                <form method="POST" action="{{ route('candidatures.store') }}" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="offre_id" value="{{ $offre->id }}">
                     

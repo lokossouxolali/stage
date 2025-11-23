@@ -21,7 +21,6 @@ class Offre extends Model
         'lieu',
         'type_stage',
         'niveau_etude',
-        'remuneration',
         'statut',
         'date_limite_candidature',
         'nombre_places',

@@ -112,25 +112,28 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-2">
-                                    <label for="date_naissance" class="form-label small">Date de naissance</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-calendar"></i>
-                                        </span>
-                                        <input type="date" 
-                                               class="form-control form-control-sm @error('date_naissance') is-invalid @enderror" 
-                                               id="date_naissance" 
-                                               name="date_naissance" 
-                                               value="{{ old('date_naissance') }}">
-                                    </div>
-                                    @error('date_naissance')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
+                        <!-- Date de naissance (uniquement pour étudiants) -->
+                        <div id="date_naissance_field" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-2">
+                                        <label for="date_naissance" class="form-label small">Date de naissance</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-calendar"></i>
+                                            </span>
+                                            <input type="date" 
+                                                   class="form-control form-control-sm @error('date_naissance') is-invalid @enderror" 
+                                                   id="date_naissance" 
+                                                   name="date_naissance" 
+                                                   value="{{ old('date_naissance') }}">
                                         </div>
-                                    @enderror
+                                        @error('date_naissance')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -366,6 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fonction pour gérer l'affichage des champs selon le rôle
     function toggleFields() {
         const selectedRole = roleSelect.value;
+        const dateNaissanceField = document.getElementById('date_naissance_field');
         
         if (selectedRole) {
             // Afficher les champs communs
@@ -379,10 +383,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Afficher les champs spécifiques selon le rôle
             if (selectedRole === 'etudiant') {
                 etudiantFields.style.display = 'block';
+                // Afficher la date de naissance pour les étudiants
+                if (dateNaissanceField) {
+                    dateNaissanceField.style.display = 'block';
+                }
                 // Rendre obligatoires les champs étudiant
                 document.getElementById('niveau_etude').required = true;
                 document.getElementById('filiere').required = true;
             } else {
+                // Masquer la date de naissance pour les entreprises et enseignants
+                if (dateNaissanceField) {
+                    dateNaissanceField.style.display = 'none';
+                }
                 document.getElementById('niveau_etude').required = false;
                 document.getElementById('filiere').required = false;
             }
@@ -401,6 +413,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // Masquer tous les champs si aucun rôle n'est sélectionné
             commonFields.style.display = 'none';
+            if (dateNaissanceField) {
+                dateNaissanceField.style.display = 'none';
+            }
         }
     }
     

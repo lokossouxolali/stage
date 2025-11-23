@@ -17,58 +17,26 @@
                 <form method="POST" action="{{ route('offres.store') }}">
                     @csrf
                     
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="titre" class="form-label">Titre de l'offre *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-briefcase"></i>
-                                    </span>
-                                    <input type="text" 
-                                           class="form-control @error('titre') is-invalid @enderror" 
-                                           id="titre" 
-                                           name="titre" 
-                                           value="{{ old('titre') }}" 
-                                           required 
-                                           autofocus 
-                                           placeholder="Ex: Développeur Web Full Stack">
-                                </div>
-                                @error('titre')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
+                    <div class="mb-3">
+                        <label for="titre" class="form-label">Titre de l'offre *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-briefcase"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control @error('titre') is-invalid @enderror" 
+                                   id="titre" 
+                                   name="titre" 
+                                   value="{{ old('titre') }}" 
+                                   required 
+                                   autofocus 
+                                   placeholder="Ex: Développeur Web Full Stack">
                         </div>
-                        
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="entreprise_id" class="form-label">Entreprise *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-building"></i>
-                                    </span>
-                                    <select class="form-select @error('entreprise_id') is-invalid @enderror" 
-                                            id="entreprise_id" 
-                                            name="entreprise_id" 
-                                            required>
-                                        <option value="">Sélectionnez une entreprise</option>
-                                        @foreach($entreprises as $entreprise)
-                                            <option value="{{ $entreprise->id }}" 
-                                                    {{ old('entreprise_id', request('entreprise_id')) == $entreprise->id ? 'selected' : '' }}>
-                                                {{ $entreprise->nom }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                @error('entreprise_id')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
+                        @error('titre')
+                            <div class="invalid-feedback">
+                                {{ $message }}
                             </div>
-                        </div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
@@ -155,18 +123,30 @@
                             </div>
                         </div>
                         
-                        <select class="form-select @error('type_stage') is-invalid @enderror" 
-                                id="type_stage" 
-                                name="type_stage" 
-                                required>
-                            <option value="">Sélectionnez le type</option>
-                            @foreach ($type_stage as $type)
-                                @foreach ($type_stage as $type)
-                                    <option value="{{ $type }}" {{ old('type_stage') == $type ? 'selected' : '' }}>{{ $type }}</option>
-                                @endforeach
-                            @endforeach
-                        </select>
-
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="type_stage" class="form-label">Type de stage *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </span>
+                                    <select class="form-select @error('type_stage') is-invalid @enderror" 
+                                            id="type_stage" 
+                                            name="type_stage" 
+                                            required>
+                                        <option value="">Sélectionnez le type</option>
+                                        @foreach ($type_stage as $type)
+                                            <option value="{{ $type }}" {{ old('type_stage') == $type ? 'selected' : '' }}>{{ $type }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @error('type_stage')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
                         
                         <div class="col-md-3">
                             <div class="mb-3">
@@ -220,9 +200,9 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="date_debut" class="form-label">Date de début</label>
+                                <label for="date_debut" class="form-label">Date de début *</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
                                         <i class="fas fa-calendar"></i>
@@ -231,7 +211,8 @@
                                            class="form-control @error('date_debut') is-invalid @enderror" 
                                            id="date_debut" 
                                            name="date_debut" 
-                                           value="{{ old('date_debut') }}">
+                                           value="{{ old('date_debut') }}"
+                                           required>
                                 </div>
                                 @error('date_debut')
                                     <div class="invalid-feedback">
@@ -241,9 +222,9 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="date_fin" class="form-label">Date de fin</label>
+                                <label for="date_fin" class="form-label">Date de fin *</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
                                         <i class="fas fa-calendar"></i>
@@ -252,30 +233,10 @@
                                            class="form-control @error('date_fin') is-invalid @enderror" 
                                            id="date_fin" 
                                            name="date_fin" 
-                                           value="{{ old('date_fin') }}">
+                                           value="{{ old('date_fin') }}"
+                                           required>
                                 </div>
                                 @error('date_fin')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="date_limite_candidature" class="form-label">Date limite candidature</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-clock"></i>
-                                    </span>
-                                    <input type="date" 
-                                           class="form-control @error('date_limite_candidature') is-invalid @enderror" 
-                                           id="date_limite_candidature" 
-                                           name="date_limite_candidature" 
-                                           value="{{ old('date_limite_candidature') }}">
-                                </div>
-                                @error('date_limite_candidature')
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
@@ -309,21 +270,19 @@
                         
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="remuneration" class="form-label">Rémunération (€/mois)</label>
+                                <label for="date_limite_candidature" class="form-label">Date limite de candidature</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <i class="fas fa-money-bill-wave"></i>
+                                        <i class="fas fa-clock"></i>
                                     </span>
-                                    <input type="number" 
-                                           class="form-control @error('remuneration') is-invalid @enderror" 
-                                           id="remuneration" 
-                                           name="remuneration" 
-                                           value="{{ old('remuneration') }}" 
-                                           min="0" 
-                                           step="0.01" 
-                                           placeholder="0 si non rémunéré">
+                                    <input type="date" 
+                                           class="form-control @error('date_limite_candidature') is-invalid @enderror" 
+                                           id="date_limite_candidature" 
+                                           name="date_limite_candidature" 
+                                           value="{{ old('date_limite_candidature') }}">
                                 </div>
-                                @error('remuneration')
+                                <small class="text-muted">Laisser vide si aucune date limite</small>
+                                @error('date_limite_candidature')
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>

@@ -128,7 +128,7 @@
                 </div>
                 
                 <!-- Documents joints -->
-                @if($candidature->cv_path || $candidature->lettre_recommandation || $candidature->portfolio)
+                @if($candidature->cv_path || $candidature->lettre_recommandation_path || $candidature->portfolio)
                     <div class="mb-4">
                         <h6 class="text-muted mb-3">Documents joints</h6>
                         <div class="row">
@@ -138,7 +138,7 @@
                                         <div class="card-body text-center">
                                             <i class="fas fa-file-pdf fa-2x mb-2" style="color: #2d3748;"></i>
                                             <div class="fw-bold">CV</div>
-                                            <a href="{{ Storage::url($candidature->cv_path) }}" 
+                                            <a href="{{ route('candidatures.download.cv', $candidature) }}" 
                                                target="_blank" 
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-download me-1"></i>
@@ -149,13 +149,13 @@
                                 </div>
                             @endif
                             
-                            @if($candidature->lettre_recommandation)
+                            @if($candidature->lettre_recommandation_path)
                                 <div class="col-md-4 mb-2">
                                     <div class="card border">
                                         <div class="card-body text-center">
                                             <i class="fas fa-file-pdf fa-2x mb-2" style="color: #2d3748;"></i>
                                             <div class="fw-bold">Lettre de recommandation</div>
-                                            <a href="{{ Storage::url($candidature->lettre_recommandation) }}" 
+                                            <a href="{{ route('candidatures.download.lettre', $candidature) }}" 
                                                target="_blank" 
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-download me-1"></i>
@@ -227,20 +227,18 @@
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         @if($candidature->statut === 'en_attente')
-                            <form method="POST" action="{{ route('candidatures.update', $candidature) }}" class="d-inline">
+                            <form method="POST" action="{{ route('candidatures.accepter', $candidature) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir accepter cette candidature ?');">
                                 @csrf
-                                @method('PUT')
-                                <input type="hidden" name="statut" value="acceptee">
+                                @method('PATCH')
                                 <button type="submit" class="btn btn-success w-100">
                                     <i class="fas fa-check me-2"></i>
                                     Accepter la candidature
                                 </button>
                             </form>
                             
-                            <form method="POST" action="{{ route('candidatures.update', $candidature) }}" class="d-inline">
+                            <form method="POST" action="{{ route('candidatures.refuser', $candidature) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir refuser cette candidature ?');">
                                 @csrf
-                                @method('PUT')
-                                <input type="hidden" name="statut" value="refusee">
+                                @method('PATCH')
                                 <button type="submit" class="btn btn-danger w-100">
                                     <i class="fas fa-times me-2"></i>
                                     Refuser la candidature
@@ -267,11 +265,18 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="mailto:{{ $candidature->etudiant->email }}" class="btn btn-outline-primary">
-                        <i class="fas fa-envelope me-2"></i>
-                        Envoyer un email
-                    </a>
-                    @if($candidature->etudiant->telephone)
+                    @if($candidature->etudiant && $candidature->etudiant->email)
+                        <a href="mailto:{{ $candidature->etudiant->email }}?subject=Candidature pour {{ $candidature->offre->titre }}" class="btn btn-outline-primary">
+                            <i class="fas fa-envelope me-2"></i>
+                            Envoyer un email
+                        </a>
+                    @else
+                        <button class="btn btn-outline-secondary" disabled>
+                            <i class="fas fa-envelope me-2"></i>
+                            Email non disponible
+                        </button>
+                    @endif
+                    @if($candidature->etudiant && $candidature->etudiant->telephone)
                         <a href="tel:{{ $candidature->etudiant->telephone }}" class="btn btn-outline-success">
                             <i class="fas fa-phone me-2"></i>
                             Appeler

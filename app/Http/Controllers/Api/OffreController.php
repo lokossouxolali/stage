@@ -61,7 +61,6 @@ class OffreController extends Controller
             'lieu' => 'nullable|string|max:255',
             'type_stage' => 'required|in:obligatoire,optionnel,projet_fin_etudes',
             'niveau_etude' => 'nullable|in:L1,L2,L3,M1,M2,Doctorat',
-            'remuneration' => 'nullable|string|max:100',
             'date_limite_candidature' => 'nullable|date',
             'nombre_places' => 'required|integer|min:1',
         ]);
@@ -96,7 +95,6 @@ class OffreController extends Controller
             'lieu' => $request->lieu,
             'type_stage' => $request->type_stage,
             'niveau_etude' => $request->niveau_etude,
-            'remuneration' => $request->remuneration,
             'date_limite_candidature' => $request->date_limite_candidature,
             'nombre_places' => $request->nombre_places,
         ]);
@@ -164,7 +162,7 @@ class OffreController extends Controller
         $offre->update($request->only([
             'titre', 'description', 'missions', 'competences_requises',
             'duree', 'date_debut', 'date_fin', 'lieu', 'type_stage',
-            'niveau_etude', 'remuneration', 'statut', 'date_limite_candidature',
+            'niveau_etude', 'statut', 'date_limite_candidature',
             'nombre_places'
         ]));
 

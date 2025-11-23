@@ -123,15 +123,6 @@
                             </div>
                         @endif
                         
-                        @if($offre->remuneration)
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Rémunération</label>
-                                <p class="form-control-plaintext">
-                                    <i class="fas fa-money-bill-wave me-2 text-muted"></i>
-                                    <span class="text-success fw-bold">{{ $offre->remuneration }}€/mois</span>
-                                </p>
-                            </div>
-                        @endif
                         
                         @if($offre->date_limite_candidature)
                             <div class="mb-3">

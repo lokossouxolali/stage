@@ -79,14 +79,6 @@
                                     <td>
                                         <div class="fw-bold">{{ $offre->titre }}</div>
                                         <small class="text-muted">{{ Str::limit($offre->description, 60) }}</small>
-                                        @if($offre->remuneration)
-                                            <div class="mt-1">
-                                                <span class="badge bg-success">
-                                                    <i class="fas fa-money-bill-wave me-1"></i>
-                                                    {{ $offre->remuneration }}€/mois
-                                                </span>
-                                            </div>
-                                        @endif
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">

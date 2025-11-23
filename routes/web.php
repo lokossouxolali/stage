@@ -110,6 +110,8 @@ Route::middleware('auth')->group(function () {
     // Routes pour les actions sur les candidatures
     Route::patch('/candidatures/{candidature}/accepter', [CandidatureController::class, 'accepter'])->name('candidatures.accepter');
     Route::patch('/candidatures/{candidature}/refuser', [CandidatureController::class, 'refuser'])->name('candidatures.refuser');
+    Route::get('/candidatures/{candidature}/cv', [CandidatureController::class, 'downloadCv'])->name('candidatures.download.cv');
+    Route::get('/candidatures/{candidature}/lettre-recommandation', [CandidatureController::class, 'downloadLettreRecommandation'])->name('candidatures.download.lettre');
     
     // Routes pour les actions sur les rapports
     Route::get('/rapports/{rapport}/download', [RapportController::class, 'download'])->name('rapports.download');

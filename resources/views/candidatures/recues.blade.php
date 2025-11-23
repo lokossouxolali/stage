@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Mes candidatures')
-@section('page-title', 'Mes candidatures')
+@section('title', 'Candidatures reçues')
+@section('page-title', 'Candidatures reçues')
 
 @section('content')
 <div class="row">
@@ -9,19 +9,26 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-file-alt me-2"></i>
-                    Mes candidatures
+                    <i class="fas fa-inbox me-2"></i>
+                    Candidatures reçues
                 </h5>
-                <a href="{{ route('candidatures.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>
-                    Nouvelle candidature
+                <a href="{{ route('offres.mes') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Mes offres
                 </a>
             </div>
             <div class="card-body">
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
                 <!-- Filtres -->
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par titre d'offre, entreprise...">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par nom étudiant, offre...">
                     </div>
                     <div class="col-md-3">
                         <select class="form-select" id="statutFilter">
@@ -32,11 +39,11 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select" id="typeFilter">
-                            <option value="">Tous les types</option>
-                            <option value="Obligatoire">Obligatoire</option>
-                            <option value="Facultatif">Facultatif</option>
-                            <option value="PFE">PFE</option>
+                        <select class="form-select" id="offreFilter">
+                            <option value="">Toutes les offres</option>
+                            @foreach($candidatures->pluck('offre')->unique('id') as $offre)
+                                <option value="{{ $offre->id }}">{{ $offre->titre }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -52,10 +59,9 @@
                     <table class="table table-hover" id="candidaturesTable">
                         <thead class="table-light">
                             <tr>
+                                <th>Candidat</th>
                                 <th>Offre</th>
-                                <th>Entreprise</th>
-                                <th>Type</th>
-                                <th>Durée</th>
+                                <th>Niveau</th>
                                 <th>Date candidature</th>
                                 <th>Statut</th>
                                 <th>Actions</th>
@@ -63,34 +69,38 @@
                         </thead>
                         <tbody>
                             @forelse($candidatures as $candidature)
-                                <tr>
+                                <tr data-offre-id="{{ $candidature->offre->id }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                {{ strtoupper(substr($candidature->etudiant->name, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ $candidature->etudiant->name }}</div>
+                                                <small class="text-muted">{{ $candidature->etudiant->email }}</small>
+                                                @if($candidature->etudiant->niveau_etude)
+                                                    <div class="mt-1">
+                                                        <span class="badge bg-secondary">{{ $candidature->etudiant->niveau_etude }}</span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>
                                         <div class="fw-bold">{{ $candidature->offre->titre }}</div>
                                         <small class="text-muted">{{ Str::limit($candidature->offre->description, 50) }}</small>
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                {{ substr($candidature->offre->entreprise->nom, 0, 1) }}
-                                            </div>
-                                            <div>
-                                                <div class="fw-bold">{{ $candidature->offre->entreprise->nom }}</div>
-                                                <small class="text-muted">{{ $candidature->offre->entreprise->secteur_activite }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ $candidature->offre->type_stage }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold">{{ $candidature->offre->duree }} mois</div>
-                                        @if($candidature->offre->date_debut)
-                                            <small class="text-muted">
-                                                Début: {{ $candidature->offre->date_debut->format('d/m/Y') }}
-                                            </small>
+                                        @if($candidature->etudiant->niveau_etude)
+                                            <span class="badge bg-info">{{ $candidature->etudiant->niveau_etude }}</span>
+                                        @else
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ $candidature->created_at->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <div class="fw-bold">{{ $candidature->date_candidature->format('d/m/Y') }}</div>
+                                        <small class="text-muted">{{ $candidature->date_candidature->format('H:i') }}</small>
+                                    </td>
                                     <td>
                                         @if($candidature->statut === 'en_attente')
                                             <span class="badge bg-warning">
@@ -113,33 +123,46 @@
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('candidatures.show', $candidature) }}" 
                                                class="btn btn-sm btn-outline-primary" 
-                                               title="Voir">
+                                               title="Voir détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             @if($candidature->statut === 'en_attente')
-                                                <a href="{{ route('candidatures.edit', $candidature) }}" 
-                                                   class="btn btn-sm btn-outline-warning" 
-                                                   title="Modifier">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-outline-danger" 
-                                                        onclick="deleteCandidature({{ $candidature->id }})" 
-                                                        title="Supprimer">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                <form method="POST" 
+                                                      action="{{ route('candidatures.accepter', $candidature) }}" 
+                                                      class="d-inline"
+                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir accepter cette candidature ?');">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" 
+                                                            class="btn btn-sm btn-success" 
+                                                            title="Accepter">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="POST" 
+                                                      action="{{ route('candidatures.refuser', $candidature) }}" 
+                                                      class="d-inline"
+                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir refuser cette candidature ?');">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" 
+                                                            class="btn btn-sm btn-danger" 
+                                                            title="Refuser">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
                                             @endif
                                         </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">Aucune candidature trouvée</p>
-                                        <a href="{{ route('candidatures.create') }}" class="btn btn-primary">
-                                            <i class="fas fa-plus me-2"></i>
-                                            Créer ma première candidature
+                                    <td colspan="6" class="text-center py-5">
+                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted mb-3">Aucune candidature reçue pour le moment</p>
+                                        <a href="{{ route('offres.mes') }}" class="btn btn-primary">
+                                            <i class="fas fa-briefcase me-2"></i>
+                                            Voir mes offres
                                         </a>
                                     </td>
                                 </tr>
@@ -159,30 +182,6 @@
     </div>
 </div>
 
-<!-- Modal de suppression -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirmer la suppression</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Êtes-vous sûr de vouloir supprimer cette candidature ?</p>
-                <p class="text-danger"><strong>Cette action est irréversible.</strong></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Supprimer</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 @push('styles')
 <style>
 .avatar-sm {
@@ -196,21 +195,15 @@
 
 @push('scripts')
 <script>
-function deleteCandidature(id) {
-    const form = document.getElementById('deleteForm');
-    form.action = `/candidatures/${id}`;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-
 // Filtrage en temps réel
 document.getElementById('searchInput').addEventListener('input', filterTable);
 document.getElementById('statutFilter').addEventListener('change', filterTable);
-document.getElementById('typeFilter').addEventListener('change', filterTable);
+document.getElementById('offreFilter').addEventListener('change', filterTable);
 
 function filterTable() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const statutFilter = document.getElementById('statutFilter').value;
-    const typeFilter = document.getElementById('typeFilter').value;
+    const offreFilter = document.getElementById('offreFilter').value;
     const table = document.getElementById('candidaturesTable');
     const rows = table.getElementsByTagName('tr');
 
@@ -220,19 +213,19 @@ function filterTable() {
         
         if (cells.length === 0) continue;
         
-        const offre = cells[0].textContent.toLowerCase();
-        const entreprise = cells[1].textContent.toLowerCase();
-        const type = cells[2].textContent;
-        const statut = cells[5].textContent;
+        const candidat = cells[0].textContent.toLowerCase();
+        const offre = cells[1].textContent.toLowerCase();
+        const statut = cells[4].textContent;
+        const offreId = row.dataset.offreId || '';
         
-        const matchesSearch = offre.includes(searchTerm) || entreprise.includes(searchTerm);
+        const matchesSearch = candidat.includes(searchTerm) || offre.includes(searchTerm);
         const matchesStatut = !statutFilter || 
             (statutFilter === 'en_attente' && statut.includes('En attente')) ||
             (statutFilter === 'acceptee' && statut.includes('Acceptée')) ||
             (statutFilter === 'refusee' && statut.includes('Refusée'));
-        const matchesType = !typeFilter || type.includes(typeFilter);
+        const matchesOffre = !offreFilter || offreId === offreFilter;
         
-        if (matchesSearch && matchesStatut && matchesType) {
+        if (matchesSearch && matchesStatut && matchesOffre) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
@@ -243,9 +236,10 @@ function filterTable() {
 function resetFilters() {
     document.getElementById('searchInput').value = '';
     document.getElementById('statutFilter').value = '';
-    document.getElementById('typeFilter').value = '';
+    document.getElementById('offreFilter').value = '';
     filterTable();
 }
 </script>
 @endpush
 @endsection
+

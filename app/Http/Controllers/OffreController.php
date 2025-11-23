@@ -22,18 +22,8 @@ class OffreController extends Controller
 
     public function create()
     {
-        $user = auth()->user();
-        
-        // Si l'utilisateur est une entreprise, ne montrer que son entreprise
-        if ($user->isEntreprise() && $user->entreprise_id) {
-            $entreprises = Entreprise::where('id', $user->entreprise_id)->get();
-        } else {
-            // Admin peut voir toutes les entreprises
-            $entreprises = Entreprise::all();
-        }
-        
         $type_stage = ['Obligatoire', 'Perfectionnement', 'Projet_fin_etudes'];
-        return view('offres.create', compact('entreprises', 'type_stage'));
+        return view('offres.create', compact('type_stage'));
     }
 
     public function store(Request $request)
@@ -41,22 +31,52 @@ class OffreController extends Controller
         $user = auth()->user();
         
         // Si l'utilisateur est une entreprise, forcer l'entreprise_id à son entreprise
-        if ($user->isEntreprise() && $user->entreprise_id) {
+        if ($user->isEntreprise()) {
+            if (!$user->entreprise_id) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['error' => 'Votre compte entreprise n\'est pas associé à une entreprise. Veuillez contacter l\'administrateur.']);
+            }
             $request->merge(['entreprise_id' => $user->entreprise_id]);
+        } else {
+            // Si l'utilisateur n'est pas une entreprise, on ne peut pas créer d'offre
+            abort(403, 'Seules les entreprises peuvent créer des offres');
         }
         
         $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
-            'competences_requises' => 'required|string',
-            'duree' => 'required|integer|min:1',
+            'missions' => 'required|string',
+            'competences_requises' => 'nullable|string',
+            'duree' => 'required|integer|min:1|max:12',
+            'type_stage' => 'required|string',
+            'niveau_etude' => 'required|in:L1,L2,L3,M1,M2',
             'date_debut' => 'required|date',
             'date_fin' => 'required|date|after:date_debut',
-            'entreprise_id' => 'required|exists:entreprises,id',
-            'statut' => 'required|in:active,inactive',
+            'nombre_places' => 'nullable|integer|min:1|max:10',
+            'lieu' => 'nullable|string|max:255',
+            'date_limite_candidature' => 'nullable|date',
+            'statut' => 'nullable|in:active,fermee,suspendue',
         ]);
 
-        Offre::create($request->all());
+        // S'assurer que l'entreprise_id est bien défini avant la création
+        $data = $request->all();
+        if (!isset($data['entreprise_id']) || !$data['entreprise_id']) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Erreur : l\'entreprise n\'a pas pu être identifiée.']);
+        }
+
+        // Gérer le statut : si la checkbox n'est pas cochée, le champ n'est pas envoyé
+        // Si non coché, on utilise 'suspendue' pour indiquer que ce n'est pas encore publié
+        // Sinon on utilise 'active' (la valeur par défaut de la base de données est 'active')
+        if (!isset($data['statut']) || $data['statut'] !== 'active') {
+            $data['statut'] = 'suspendue'; // Brouillon/non publié
+        } else {
+            $data['statut'] = 'active';
+        }
+
+        Offre::create($data);
 
         return redirect()->route('offres.mes')
             ->with('success', 'Offre créée avec succès');
@@ -77,15 +97,7 @@ class OffreController extends Controller
             abort(403, 'Vous n\'êtes pas autorisé à modifier cette offre');
         }
         
-        // Si l'utilisateur est une entreprise, ne montrer que son entreprise
-        if ($user->isEntreprise() && $user->entreprise_id) {
-            $entreprises = Entreprise::where('id', $user->entreprise_id)->get();
-        } else {
-            // Admin peut voir toutes les entreprises
-            $entreprises = Entreprise::all();
-        }
-        
-        return view('offres.edit', compact('offre', 'entreprises'));
+        return view('offres.edit', compact('offre'));
     }
 
     public function update(Request $request, Offre $offre)
@@ -105,12 +117,17 @@ class OffreController extends Controller
         $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
-            'competences_requises' => 'required|string',
-            'duree' => 'required|integer|min:1',
+            'missions' => 'required|string',
+            'competences_requises' => 'nullable|string',
+            'duree' => 'required|integer|min:1|max:12',
+            'type_stage' => 'required|string',
+            'niveau_etude' => 'required|in:L1,L2,L3,M1,M2',
             'date_debut' => 'required|date',
             'date_fin' => 'required|date|after:date_debut',
-            'entreprise_id' => 'required|exists:entreprises,id',
-            'statut' => 'required|in:active,inactive',
+            'nombre_places' => 'nullable|integer|min:1|max:10',
+            'lieu' => 'nullable|string|max:255',
+            'date_limite_candidature' => 'nullable|date',
+            'statut' => 'nullable|in:active,inactive',
         ]);
 
         $offre->update($request->all());
@@ -137,7 +154,10 @@ class OffreController extends Controller
     public function mesOffres()
     {
         $user = auth()->user();
-        $offres = Offre::where('entreprise_id', $user->entreprise_id)->paginate(10);
+        $offres = Offre::where('entreprise_id', $user->entreprise_id)
+            ->with('candidatures')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
         return view('offres.mes', compact('offres'));
     }
 

@@ -82,7 +82,6 @@ Créer une nouvelle offre (entreprises uniquement)
     "lieu": "Paris",
     "type_stage": "obligatoire",
     "niveau_etude": "M2",
-    "remuneration": "Gratifié",
     "date_limite_candidature": "2023-12-15",
     "nombre_places": 2
 }
