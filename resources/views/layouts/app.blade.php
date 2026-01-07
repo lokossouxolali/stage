@@ -456,6 +456,48 @@
                                 </li>
                             @endif
                             
+                            @if(auth()->user()->isEtudiant() || auth()->user()->isEnseignant() || auth()->user()->isAdmin())
+                                <!-- Menu Proposition de Thème -->
+                                <li class="nav-item">
+                                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                        <span>Proposition de Thème</span>
+                                    </h6>
+                                </li>
+                                
+                                @if(auth()->user()->isEtudiant())
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->routeIs('propositions.create') ? 'active' : '' }}" href="{{ route('propositions.create') }}">
+                                            <i class="fas fa-plus-circle me-2"></i>
+                                            Faire une proposition
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->routeIs('propositions.mes') ? 'active' : '' }}" href="{{ route('propositions.mes') }}">
+                                            <i class="fas fa-list me-2"></i>
+                                            Mes propositions
+                                        </a>
+                                    </li>
+                                @endif
+                                
+                                @if(auth()->user()->isEnseignant())
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->routeIs('propositions.encadrees') ? 'active' : '' }}" href="{{ route('propositions.encadrees') }}">
+                                            <i class="fas fa-inbox me-2"></i>
+                                            Propositions reçues
+                                        </a>
+                                    </li>
+                                @endif
+                                
+                                @if(auth()->user()->isAdmin())
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->routeIs('propositions.index') ? 'active' : '' }}" href="{{ route('propositions.index') }}">
+                                            <i class="fas fa-folder-open me-2"></i>
+                                            Toutes les propositions
+                                        </a>
+                                    </li>
+                                @endif
+                            @endif
+                            
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
                                     <i class="fas fa-user me-2"></i>

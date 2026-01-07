@@ -151,4 +151,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('/propositions/{proposition}/valider-enseignant', [PropositionThemeController::class, 'validerParEnseignant'])->name('propositions.valider-enseignant');
         Route::patch('/propositions/{proposition}/rejeter-enseignant', [PropositionThemeController::class, 'rejeterParEnseignant'])->name('propositions.rejeter-enseignant');
     });
+    
+    // Routes pour télécharger les fichiers des propositions
+    Route::get('/propositions/{proposition}/fiche-stage', [PropositionThemeController::class, 'downloadFicheStage'])->name('propositions.download.fiche');
+    Route::get('/propositions/{proposition}/proposition-theme', [PropositionThemeController::class, 'downloadPropositionTheme'])->name('propositions.download.theme');
 });

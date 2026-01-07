@@ -6,17 +6,24 @@ use Illuminate\Http\Request;
 use App\Models\PropositionTheme;
 use App\Models\User;
 use App\Models\Notification;
+use App\Notifications\PropositionThemeStatusNotification;
+use Illuminate\Support\Facades\Storage;
 
 class PropositionThemeController extends Controller
 {
     /**
      * Afficher la liste des propositions de thèmes (Admin)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $propositions = PropositionTheme::with(['etudiant', 'directeurMemoire'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = PropositionTheme::with(['etudiant', 'directeurMemoire']);
+
+        // Appliquer le filtre si spécifié
+        if ($request->has('filtre') && $request->filtre) {
+            $query->where('statut', $request->filtre);
+        }
+
+        $propositions = $query->orderBy('created_at', 'desc')->paginate(10);
         
         return view('propositions.index', compact('propositions'));
     }
@@ -41,27 +48,64 @@ class PropositionThemeController extends Controller
             'objectifs' => 'nullable|string',
             'methodologie' => 'nullable|string',
             'directeur_memoire_id' => 'nullable|exists:users,id',
+            'fiche_stage' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB
+            'proposition_theme' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB
+            'envoyer_au_directeur' => 'nullable|boolean',
+            'envoyer_a_l_admin' => 'nullable|boolean',
         ]);
 
-        $proposition = PropositionTheme::create([
+        // Vérifier qu'au moins un destinataire est sélectionné
+        if (!$request->envoyer_au_directeur && !$request->envoyer_a_l_admin) {
+            return back()->withErrors(['destinataires' => 'Vous devez sélectionner au moins un destinataire.'])->withInput();
+        }
+
+        $data = [
             'etudiant_id' => auth()->id(),
             'titre' => $request->titre,
             'description' => $request->description,
             'objectifs' => $request->objectifs,
             'methodologie' => $request->methodologie,
             'directeur_memoire_id' => $request->directeur_memoire_id ?? auth()->user()->directeur_memoire_id,
+            'envoye_au_directeur' => $request->boolean('envoyer_au_directeur'),
+            'envoye_a_l_admin' => $request->boolean('envoyer_a_l_admin'),
             'statut' => 'en_attente',
             'date_soumission' => now(),
-        ]);
+        ];
 
-        // Créer une notification pour l'admin
-        Notification::create([
-            'user_id' => User::where('role', 'admin')->first()->id ?? 1,
-            'type' => 'nouvelle_proposition',
-            'titre' => 'Nouvelle proposition de thème',
-            'message' => auth()->user()->name . ' a soumis une nouvelle proposition de thème : ' . $proposition->titre,
-            'lien' => route('propositions.show', $proposition->id),
-        ]);
+        // Upload des fichiers
+        if ($request->hasFile('fiche_stage')) {
+            $data['fiche_stage_path'] = $request->file('fiche_stage')->store('fiches_stages', 'public');
+        }
+
+        if ($request->hasFile('proposition_theme')) {
+            $data['proposition_theme_path'] = $request->file('proposition_theme')->store('propositions_themes', 'public');
+        }
+
+        $proposition = PropositionTheme::create($data);
+
+        // Créer des notifications selon les destinataires
+        if ($data['envoye_a_l_admin']) {
+            $admin = User::where('role', 'admin')->first();
+            if ($admin) {
+                Notification::create([
+                    'user_id' => $admin->id,
+                    'type' => 'nouvelle_proposition',
+                    'titre' => 'Nouvelle proposition de thème',
+                    'message' => auth()->user()->name . ' a soumis une nouvelle proposition de thème : ' . $proposition->titre,
+                    'lien' => route('propositions.show', $proposition->id),
+                ]);
+            }
+        }
+
+        if ($data['envoye_au_directeur'] && $proposition->directeur_memoire_id) {
+            Notification::create([
+                'user_id' => $proposition->directeur_memoire_id,
+                'type' => 'nouvelle_proposition',
+                'titre' => 'Nouvelle proposition de thème à valider',
+                'message' => auth()->user()->name . ' a soumis une proposition de thème pour validation : ' . $proposition->titre,
+                'lien' => route('propositions.show', $proposition->id),
+            ]);
+        }
 
         return redirect()->route('propositions.mes')
             ->with('success', 'Proposition de thème soumise avec succès');
@@ -164,6 +208,9 @@ class PropositionThemeController extends Controller
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
+        // Envoyer une notification par email à l'étudiant
+        $proposition->etudiant->notify(new PropositionThemeStatusNotification($proposition, 'valide'));
+
         return back()->with('success', 'Proposition validée avec succès');
     }
 
@@ -190,6 +237,9 @@ class PropositionThemeController extends Controller
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
+        // Envoyer une notification par email à l'étudiant
+        $proposition->etudiant->notify(new PropositionThemeStatusNotification($proposition, 'refuse', $request->commentaires_admin));
+
         return back()->with('success', 'Proposition refusée avec succès');
     }
 
@@ -209,16 +259,19 @@ class PropositionThemeController extends Controller
     /**
      * Consulter les propositions des étudiants encadrés (Enseignant)
      */
-    public function propositionsEncadrees()
+    public function propositionsEncadrees(Request $request)
     {
         $user = auth()->user();
-        $propositions = PropositionTheme::where('directeur_memoire_id', $user->id)
-            ->orWhereHas('etudiant', function($query) use ($user) {
-                $query->where('directeur_memoire_id', $user->id);
-            })
-            ->with('etudiant')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = PropositionTheme::where('directeur_memoire_id', $user->id)
+            ->where('envoye_au_directeur', true)
+            ->with('etudiant');
+
+        // Appliquer le filtre si spécifié
+        if ($request->has('filtre') && $request->filtre) {
+            $query->where('statut', $request->filtre);
+        }
+
+        $propositions = $query->orderBy('created_at', 'desc')->paginate(10);
         
         return view('propositions.encadrees', compact('propositions'));
     }
@@ -272,6 +325,9 @@ class PropositionThemeController extends Controller
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
+        // Envoyer une notification par email à l'étudiant
+        $proposition->etudiant->notify(new PropositionThemeStatusNotification($proposition, 'valide'));
+
         return back()->with('success', 'Proposition validée avec succès');
     }
 
@@ -303,6 +359,47 @@ class PropositionThemeController extends Controller
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
+        // Envoyer une notification par email à l'étudiant
+        $proposition->etudiant->notify(new PropositionThemeStatusNotification($proposition, 'refuse', $request->commentaires_enseignant));
+
         return back()->with('success', 'Proposition refusée avec succès');
+    }
+
+    /**
+     * Télécharger la fiche de stage
+     */
+    public function downloadFicheStage(PropositionTheme $proposition)
+    {
+        $this->authorize('downloadFile', $proposition);
+
+        if (!$proposition->fiche_stage_path) {
+            abort(404, 'Fiche de stage non trouvée');
+        }
+
+        if (!Storage::disk('public')->exists($proposition->fiche_stage_path)) {
+            abort(404, 'Fichier non trouvé');
+        }
+
+        $fileName = 'Fiche_Stage_' . str_replace(' ', '_', $proposition->etudiant->name) . '.' . pathinfo($proposition->fiche_stage_path, PATHINFO_EXTENSION);
+        return Storage::disk('public')->download($proposition->fiche_stage_path, $fileName);
+    }
+
+    /**
+     * Télécharger le document de proposition de thème
+     */
+    public function downloadPropositionTheme(PropositionTheme $proposition)
+    {
+        $this->authorize('downloadFile', $proposition);
+
+        if (!$proposition->proposition_theme_path) {
+            abort(404, 'Document de proposition de thème non trouvé');
+        }
+
+        if (!Storage::disk('public')->exists($proposition->proposition_theme_path)) {
+            abort(404, 'Fichier non trouvé');
+        }
+
+        $fileName = 'Proposition_Theme_' . str_replace(' ', '_', $proposition->etudiant->name) . '.' . pathinfo($proposition->proposition_theme_path, PATHINFO_EXTENSION);
+        return Storage::disk('public')->download($proposition->proposition_theme_path, $fileName);
     }
 }
