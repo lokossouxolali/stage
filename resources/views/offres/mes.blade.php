@@ -191,3 +191,4 @@ function deleteOffre(id) {
 @endpush
 @endsection
 
+

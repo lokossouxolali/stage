@@ -130,7 +130,7 @@ class CandidatureController extends Controller
 
     public function show(string $id)
     {
-        $candidature = Candidature::with(['etudiant', 'offre.entreprise', 'stage'])->find($id);
+        $candidature = Candidature::with(['etudiant', 'offre.entreprise'])->find($id);
 
         if (!$candidature) {
             return response()->json([

@@ -66,21 +66,6 @@
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Rapports</div>
-                                    <div class="stats-number">{{ $stats['rapports'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-file-pdf fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             @endif
 
             @if(auth()->user()->isEtudiant())
@@ -116,21 +101,6 @@
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Mes Rapports</div>
-                                    <div class="stats-number">{{ $stats['mes_rapports'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-file-pdf fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             @endif
 
             @if(auth()->user()->isEntreprise())
@@ -222,18 +192,6 @@
                         </div>
                     @endif
 
-                    <div class="col-md-6 mb-3">
-                        <a href="{{ route('rapports.index') }}" class="btn btn-outline-info w-100">
-                            <i class="fas fa-file-pdf me-2"></i>
-                            Voir les rapports
-                        </a>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <a href="{{ route('rapports.index') }}" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-file-pdf me-2"></i>
-                            Gérer les rapports
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -317,19 +275,6 @@
                         <div class="progress mb-2">
                             <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $stats['pourcentage_enseignants'] ?? 0 }}%">
                                 Enseignants: {{ $stats['pourcentage_enseignants'] ?? 0 }}%
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Rapports par statut</h6>
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $stats['pourcentage_rapports_soumis'] ?? 0 }}%">
-                                Soumis: {{ $stats['pourcentage_rapports_soumis'] ?? 0 }}%
-                            </div>
-                        </div>
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $stats['pourcentage_rapports_valides'] ?? 0 }}%">
-                                Validés: {{ $stats['pourcentage_rapports_valides'] ?? 0 }}%
                             </div>
                         </div>
                     </div>

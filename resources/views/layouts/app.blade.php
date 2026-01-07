@@ -397,12 +397,6 @@
                                         Entreprises
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('rapports.*') ? 'active' : '' }}" href="{{ route('rapports.index') }}">
-                                        <i class="fas fa-file-pdf me-2"></i>
-                                        Rapports
-                                    </a>
-                                </li>
                             @endif
                             
                             @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())
@@ -435,12 +429,6 @@
                                         Mes candidatures
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('rapports.mes') ? 'active' : '' }}" href="{{ route('rapports.mes') }}">
-                                        <i class="fas fa-file-pdf me-2"></i>
-                                        Mes rapports
-                                    </a>
-                                </li>
                                 @if(auth()->user()->isEtudiant())
                                     <li class="nav-item">
                                         <a class="nav-link {{ request()->routeIs('users.choisir-directeur-memoire') ? 'active' : '' }}" href="{{ route('users.choisir-directeur-memoire') }}">
@@ -464,12 +452,6 @@
                                         @if($demandesEnAttente > 0)
                                             <span class="badge bg-warning ms-2" style="font-size: 0.65rem;">{{ $demandesEnAttente }}</span>
                                         @endif
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('rapports.encadres') ? 'active' : '' }}" href="{{ route('rapports.encadres') }}">
-                                        <i class="fas fa-file-pdf me-2"></i>
-                                        Rapports encadrés
                                     </a>
                                 </li>
                             @endif

@@ -52,11 +52,11 @@ class CandidatureController extends Controller
         $data['date_candidature'] = now();
 
         if ($request->hasFile('cv_path')) {
-            $data['cv_path'] = $request->file('cv_path')->store('cvs');
+            $data['cv_path'] = $request->file('cv_path')->store('cvs', 'public');
         }
 
         if ($request->hasFile('lettre_recommandation')) {
-            $data['lettre_recommandation_path'] = $request->file('lettre_recommandation')->store('lettres_recommandation');
+            $data['lettre_recommandation_path'] = $request->file('lettre_recommandation')->store('lettres_recommandation', 'public');
         }
 
         $candidature = Candidature::create($data);
@@ -228,25 +228,13 @@ class CandidatureController extends Controller
             abort(403, 'Vous n\'êtes pas autorisé à télécharger ce fichier');
         }
 
-        // Vérifier si le fichier existe - essayer plusieurs chemins possibles
-        $filePath = storage_path('app/' . $candidature->cv_path);
-        
-        // Si le fichier n'existe pas, essayer avec le disque public
-        if (!file_exists($filePath)) {
-            $filePath = storage_path('app/public/' . $candidature->cv_path);
-        }
-        
-        // Si toujours pas trouvé, essayer directement le chemin stocké
-        if (!file_exists($filePath)) {
-            $filePath = storage_path('app/' . ltrim($candidature->cv_path, '/'));
-        }
-        
-        if (!file_exists($filePath)) {
+        // Vérifier si le fichier existe sur le disque public
+        if (!Storage::disk('public')->exists($candidature->cv_path)) {
             abort(404, 'Fichier non trouvé à l\'emplacement : ' . $candidature->cv_path);
         }
 
         $fileName = 'CV_' . str_replace(' ', '_', $candidature->etudiant->name) . '.pdf';
-        return response()->download($filePath, $fileName);
+        return Storage::disk('public')->download($candidature->cv_path, $fileName);
     }
 
     public function downloadLettreRecommandation(Candidature $candidature)
@@ -273,25 +261,13 @@ class CandidatureController extends Controller
             abort(403, 'Vous n\'êtes pas autorisé à télécharger ce fichier');
         }
 
-        // Vérifier si le fichier existe - essayer plusieurs chemins possibles
-        $filePath = storage_path('app/' . $candidature->lettre_recommandation_path);
-        
-        // Si le fichier n'existe pas, essayer avec le disque public
-        if (!file_exists($filePath)) {
-            $filePath = storage_path('app/public/' . $candidature->lettre_recommandation_path);
-        }
-        
-        // Si toujours pas trouvé, essayer directement le chemin stocké
-        if (!file_exists($filePath)) {
-            $filePath = storage_path('app/' . ltrim($candidature->lettre_recommandation_path, '/'));
-        }
-        
-        if (!file_exists($filePath)) {
+        // Vérifier si le fichier existe sur le disque public
+        if (!Storage::disk('public')->exists($candidature->lettre_recommandation_path)) {
             abort(404, 'Fichier non trouvé à l\'emplacement : ' . $candidature->lettre_recommandation_path);
         }
 
         $fileName = 'Lettre_recommandation_' . str_replace(' ', '_', $candidature->etudiant->name) . '.pdf';
-        return response()->download($filePath, $fileName);
+        return Storage::disk('public')->download($candidature->lettre_recommandation_path, $fileName);
     }
 
     public function export()

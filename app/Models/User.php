@@ -98,21 +98,6 @@ class User extends Authenticatable
         return $this->hasMany(Candidature::class, 'etudiant_id');
     }
 
-    public function stagesEncadresEntreprise()
-    {
-        return $this->hasMany(Stage::class, 'encadreur_entreprise_id');
-    }
-
-    public function stagesEncadresAcademique()
-    {
-        return $this->hasMany(Stage::class, 'encadreur_academique_id');
-    }
-
-    public function evaluations()
-    {
-        return $this->hasMany(Evaluation::class, 'evaluateur_id');
-    }
-
     public function directeurMemoire()
     {
         return $this->belongsTo(User::class, 'directeur_memoire_id');

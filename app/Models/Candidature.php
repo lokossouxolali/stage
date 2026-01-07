@@ -41,11 +41,6 @@ class Candidature extends Model
         return $this->belongsTo(Offre::class);
     }
 
-    public function stage()
-    {
-        return $this->hasOne(Stage::class);
-    }
-
     // Scopes
     public function scopeAcceptees($query)
     {

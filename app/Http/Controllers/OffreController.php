@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Offre;
 use App\Models\Entreprise;
-use App\Models\TypeStage;
 
 class OffreController extends Controller
 {

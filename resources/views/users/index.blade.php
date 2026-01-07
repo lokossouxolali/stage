@@ -148,7 +148,7 @@
             <!-- Pagination -->
             <div class="d-flex justify-content-center mt-3">
                 <div style="font-size: 0.75rem;">
-                    {{ $users->links() }}
+                    {{ $users->links('pagination::bootstrap-5') }}
                 </div>
             </div>
         @else

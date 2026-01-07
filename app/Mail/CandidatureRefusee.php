@@ -55,3 +55,4 @@ class CandidatureRefusee extends Mailable
     }
 }
 
+
