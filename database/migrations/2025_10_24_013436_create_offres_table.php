@@ -22,7 +22,7 @@ return new class extends Migration
             $table->date('date_debut')->nullable();
             $table->date('date_fin')->nullable();
             $table->string('lieu')->nullable();
-            $table->enum('type_stage', ['Obligatoire', 'Perfectionnement', 'Projet_fin_etudes'])->default('Obligatoire');
+            $table->enum('type_stage', ['Perfectionnement', 'Professionnel', 'Académique', 'Mémoire']);
             $table->enum('niveau_etude', ['L1', 'L2', 'L3', 'M1', 'M2', 'Doctorat'])->nullable();
             $table->string('remuneration')->nullable();
             $table->enum('statut', ['active', 'fermee', 'suspendue'])->default('active');

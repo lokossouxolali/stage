@@ -77,4 +77,20 @@ class NotificationController extends Controller
             'nombre' => $nombre
         ]);
     }
+
+    public function derniereNonLue()
+    {
+        $notification = Notification::where('user_id', auth()->id())
+            ->where('lu', false)
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'notification' => $notification ? [
+                'titre' => $notification->titre,
+                'message' => $notification->message,
+                'lien' => $notification->lien,
+            ] : null,
+        ]);
+    }
 }

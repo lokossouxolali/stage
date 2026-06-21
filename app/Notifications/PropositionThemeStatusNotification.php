@@ -2,84 +2,50 @@
 
 namespace App\Notifications;
 
+use App\Models\PropositionTheme;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\PropositionTheme;
 
-class PropositionThemeStatusNotification extends Notification implements ShouldQueue
+class PropositionThemeStatusNotification extends Notification
 {
     use Queueable;
 
-    protected $proposition;
-    protected $statut;
-    protected $commentaires;
-
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(PropositionTheme $proposition, string $statut, ?string $commentaires = null)
-    {
-        $this->proposition = $proposition;
-        $this->statut = $statut;
-        $this->commentaires = $commentaires;
+    public function __construct(
+        protected PropositionTheme $proposition,
+        protected string $statut,
+        protected ?string $commentaires = null
+    ) {
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
-        $proposition = $this->proposition;
-        $statut = $this->statut;
-        $commentaires = $this->commentaires;
-
-        $subject = $statut === 'valide' ? 'Votre proposition de thème a été validée' : 'Votre proposition de thème a été rejetée';
+        $message = match ($this->statut) {
+            'valide_dm' => 'Votre proposition de thème a été validée par votre Directeur de Mémoire',
+            'valide' => 'Votre thème a été validé',
+            default => 'Votre thème a été rejeté',
+        };
 
         $mail = (new MailMessage)
-            ->subject($subject)
-            ->greeting('Bonjour ' . $notifiable->name . ',');
+            ->subject($message)
+            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->line($message)
+            ->line('Titre : ' . $this->proposition->titre);
 
-        if ($statut === 'valide') {
-            $mail->line('Félicitations ! Votre proposition de thème "' . $proposition->titre . '" a été **validée**.')
-                 ->line('Vous pouvez maintenant procéder aux prochaines étapes de votre projet de stage.');
-        } else {
-            $mail->line('Nous regrettons de vous informer que votre proposition de thème "' . $proposition->titre . '" a été **rejetée**.');
-            if ($commentaires) {
-                $mail->line('**Motif du rejet :**')
-                     ->line($commentaires);
-            }
-            $mail->line('Vous pouvez soumettre une nouvelle proposition en modifiant votre demande actuelle ou en créant une nouvelle proposition.');
+        if (!in_array($this->statut, ['valide', 'valide_dm'], true) && $this->commentaires) {
+            $mail->line('Motif : ' . $this->commentaires);
         }
 
-        $mail->line('**Détails de votre proposition :**')
-             ->line('**Titre :** ' . $proposition->titre)
-             ->line('**Soumise le :** ' . $proposition->date_soumission->format('d/m/Y'))
-             ->line('**Directeur de mémoire :** ' . ($proposition->directeurMemoire ? $proposition->directeurMemoire->name : 'Non assigné'))
-             ->action('Voir ma proposition', route('propositions.show', $proposition->id))
-             ->line('Si vous avez des questions, n\'hésitez pas à contacter votre directeur de mémoire ou l\'administration.')
-             ->salutation('Cordialement,')
-             ->salutation('L\'équipe de gestion des stages');
-
-        return $mail;
+        return $mail
+            ->action('Voir ma proposition', route('propositions.show', $this->proposition->id))
+            ->line('Merci de consulter la plateforme pour plus de détails.');
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(object $notifiable): array
     {
         return [

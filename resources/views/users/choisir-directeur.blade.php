@@ -20,10 +20,6 @@
                 <i class="fas fa-user-tie me-2"></i>
                 Sélectionner votre directeur de mémoire
             </h5>
-            <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left me-2"></i>
-                Retour
-            </a>
         </div>
 
         @if($enseignants->count() > 0)
@@ -38,7 +34,7 @@
                                         <img src="{{ $enseignant->photo_url }}" 
                                              alt="{{ $enseignant->name }}" 
                                              class="rounded-circle mx-auto d-block teacher-avatar"
-                                             style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                                             style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #0b1f4d; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
                                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                         <div class="teacher-avatar-fallback mx-auto" style="display: none;">
                                             {{ strtoupper(substr($enseignant->name, 0, 1)) }}
@@ -51,20 +47,20 @@
                                 </div>
 
                                 <!-- Nom -->
-                                <h6 class="card-title mb-2 fw-bold" style="color: #2d3748;">
+                                <h6 class="card-title mb-2 fw-bold" style="color: #0b1f4d;">
                                     {{ $enseignant->name }}
                                 </h6>
 
                                 <!-- Email -->
                                 <p class="text-muted small mb-2">
-                                    <i class="fas fa-envelope me-1" style="color: #2d3748;"></i>
+                                    <i class="fas fa-envelope me-1" style="color: #0b1f4d;"></i>
                                     {{ $enseignant->email }}
                                 </p>
 
                                 <!-- Téléphone si disponible -->
                                 @if($enseignant->telephone)
                                     <p class="text-muted small mb-3">
-                                        <i class="fas fa-phone me-1" style="color: #2d3748;"></i>
+                                        <i class="fas fa-phone me-1" style="color: #0b1f4d;"></i>
                                         {{ $enseignant->telephone }}
                                     </p>
                                 @endif
@@ -72,7 +68,7 @@
                                 <!-- Badge si déjà sélectionné -->
                                 @if(auth()->user()->directeur_memoire_id == $enseignant->id)
                                     <div class="mb-3">
-                                        <span class="badge" style="background-color: #2d3748; color: #ffffff;">
+                                        <span class="badge" style="background-color: #0b1f4d; color: #ffffff;">
                                             <i class="fas fa-check-circle me-1"></i>
                                             Votre directeur actuel
                                         </span>
@@ -84,7 +80,7 @@
                                     <form method="POST" action="{{ route('users.choisir-directeur-memoire.store') }}" class="mt-3">
                                         @csrf
                                         <input type="hidden" name="directeur_memoire_id" value="{{ $enseignant->id }}">
-                                        <button type="submit" class="btn btn-sm w-100 btn-choose-dm" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+                                        <button type="submit" class="btn btn-sm w-100 btn-choose-dm" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                                             <i class="fas fa-user-check me-2"></i>
                                             Choisir comme DM
                                         </button>
@@ -123,7 +119,7 @@
     }
     
     .teacher-card.border-primary {
-        border-color: #2d3748 !important;
+        border-color: #0b1f4d !important;
         border-width: 2px;
     }
     
@@ -131,14 +127,14 @@
         width: 80px;
         height: 80px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        background: linear-gradient(135deg, #0b1f4d 0%, #123a7a 100%);
         color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 2rem;
         font-weight: 700;
-        border: 3px solid #2d3748;
+        border: 3px solid #0b1f4d;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
@@ -152,8 +148,8 @@
     }
     
     .btn-choose-dm:hover {
-        background-color: #374151 !important;
-        border-color: #374151 !important;
+        background-color: #123a7a !important;
+        border-color: #123a7a !important;
         color: #ffffff !important;
     }
 </style>

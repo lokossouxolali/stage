@@ -20,6 +20,14 @@ class CheckRole
         }
 
         $user = auth()->user();
+
+        if ($user->isSuperAdmin()) {
+            return $next($request);
+        }
+
+        if (in_array('admin', $roles, true) && $user->isResponsablePedagogique()) {
+            return $next($request);
+        }
         
         // Vérifier si l'utilisateur a l'un des rôles autorisés
         if (!in_array($user->role, $roles)) {

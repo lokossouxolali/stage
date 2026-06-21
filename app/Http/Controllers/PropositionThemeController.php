@@ -7,6 +7,8 @@ use App\Models\PropositionTheme;
 use App\Models\User;
 use App\Models\Notification;
 use App\Notifications\PropositionThemeStatusNotification;
+use App\Notifications\PropositionThemeSubmittedNotification;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PropositionThemeController extends Controller
@@ -33,8 +35,8 @@ class PropositionThemeController extends Controller
      */
     public function create()
     {
-        $enseignants = User::where('role', 'enseignant')->get();
-        return view('propositions.create', compact('enseignants'));
+        $directeur = auth()->user()->directeurMemoire;
+        return view('propositions.create', compact('directeur'));
     }
 
     /**
@@ -47,16 +49,27 @@ class PropositionThemeController extends Controller
             'description' => 'required|string',
             'objectifs' => 'nullable|string',
             'methodologie' => 'nullable|string',
-            'directeur_memoire_id' => 'nullable|exists:users,id',
-            'fiche_stage' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB
-            'proposition_theme' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB
+            'fiche_stage' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'proposition_theme' => 'required|file|mimes:pdf,doc,docx|max:5120',
             'envoyer_au_directeur' => 'nullable|boolean',
             'envoyer_a_l_admin' => 'nullable|boolean',
         ]);
 
-        // Vérifier qu'au moins un destinataire est sélectionné
-        if (!$request->envoyer_au_directeur && !$request->envoyer_a_l_admin) {
-            return back()->withErrors(['destinataires' => 'Vous devez sélectionner au moins un destinataire.'])->withInput();
+        $envoyerAuDirecteur = $request->boolean('envoyer_au_directeur');
+        $envoyerAAdmin = $request->boolean('envoyer_a_l_admin');
+
+        if (!$envoyerAuDirecteur && !$envoyerAAdmin) {
+            return back()
+                ->withErrors(['destinataires' => 'Veuillez sélectionner au moins un destinataire'])
+                ->withInput();
+        }
+
+        $directeur = auth()->user()->directeurMemoire;
+
+        if ($envoyerAuDirecteur && !$directeur) {
+            return back()
+                ->withErrors(['envoyer_au_directeur' => 'Veuillez d\'abord sélectionner un Directeur de Mémoire.'])
+                ->withInput();
         }
 
         $data = [
@@ -65,14 +78,13 @@ class PropositionThemeController extends Controller
             'description' => $request->description,
             'objectifs' => $request->objectifs,
             'methodologie' => $request->methodologie,
-            'directeur_memoire_id' => $request->directeur_memoire_id ?? auth()->user()->directeur_memoire_id,
-            'envoye_au_directeur' => $request->boolean('envoyer_au_directeur'),
-            'envoye_a_l_admin' => $request->boolean('envoyer_a_l_admin'),
+            'directeur_memoire_id' => $directeur?->id,
+            'envoye_au_directeur' => $envoyerAuDirecteur,
+            'envoye_a_l_admin' => $envoyerAAdmin,
             'statut' => 'en_attente',
             'date_soumission' => now(),
         ];
 
-        // Upload des fichiers
         if ($request->hasFile('fiche_stage')) {
             $data['fiche_stage_path'] = $request->file('fiche_stage')->store('fiches_stages', 'public');
         }
@@ -82,29 +94,35 @@ class PropositionThemeController extends Controller
         }
 
         $proposition = PropositionTheme::create($data);
+        $proposition->load('etudiant', 'directeurMemoire');
 
-        // Créer des notifications selon les destinataires
-        if ($data['envoye_a_l_admin']) {
-            $admin = User::where('role', 'admin')->first();
-            if ($admin) {
-                Notification::create([
-                    'user_id' => $admin->id,
-                    'type' => 'nouvelle_proposition',
-                    'titre' => 'Nouvelle proposition de thème',
-                    'message' => auth()->user()->name . ' a soumis une nouvelle proposition de thème : ' . $proposition->titre,
-                    'lien' => route('propositions.show', $proposition->id),
-                ]);
-            }
-        }
-
-        if ($data['envoye_au_directeur'] && $proposition->directeur_memoire_id) {
+        if ($envoyerAuDirecteur && $directeur) {
             Notification::create([
-                'user_id' => $proposition->directeur_memoire_id,
+                'user_id' => $directeur->id,
                 'type' => 'nouvelle_proposition',
                 'titre' => 'Nouvelle proposition de thème à valider',
-                'message' => auth()->user()->name . ' a soumis une proposition de thème pour validation : ' . $proposition->titre,
+                'message' => auth()->user()->name . ' a soumis une proposition de thème : ' . $proposition->titre,
                 'lien' => route('propositions.show', $proposition->id),
             ]);
+
+            $this->envoyerEmailSoumission($directeur, $proposition);
+        }
+
+        if ($envoyerAAdmin) {
+            User::whereIn('role', User::administrativeRoles())
+                ->where('est_actif', true)
+                ->get()
+                ->each(function (User $admin) use ($proposition) {
+                    Notification::create([
+                        'user_id' => $admin->id,
+                        'type' => 'nouvelle_proposition',
+                        'titre' => 'Nouvelle proposition de thème',
+                        'message' => auth()->user()->name . ' a soumis une proposition de thème : ' . $proposition->titre,
+                        'lien' => route('propositions.show', $proposition->id),
+                    ]);
+
+                    $this->envoyerEmailSoumission($admin, $proposition);
+                });
         }
 
         return redirect()->route('propositions.mes')
@@ -113,8 +131,7 @@ class PropositionThemeController extends Controller
 
     /**
      * Afficher une proposition spécifique
-     */
-    public function show(PropositionTheme $proposition)
+     */public function show(PropositionTheme $proposition)
     {
         $proposition->load(['etudiant', 'directeurMemoire']);
         return view('propositions.show', compact('proposition'));
@@ -126,12 +143,12 @@ class PropositionThemeController extends Controller
     public function edit(PropositionTheme $proposition)
     {
         // Seul l'étudiant propriétaire peut modifier sa proposition
-        if (auth()->id() !== $proposition->etudiant_id) {
+        if (!auth()->user()->isSuperAdmin() && auth()->id() !== $proposition->etudiant_id) {
             abort(403, 'Vous n\'êtes pas autorisé à modifier cette proposition');
         }
 
         // Ne peut modifier que si en attente
-        if ($proposition->statut !== 'en_attente') {
+        if (!auth()->user()->isSuperAdmin() && $proposition->statut !== 'en_attente') {
             return back()->with('error', 'Vous ne pouvez modifier que les propositions en attente');
         }
 
@@ -145,12 +162,12 @@ class PropositionThemeController extends Controller
     public function update(Request $request, PropositionTheme $proposition)
     {
         // Seul l'étudiant propriétaire peut modifier sa proposition
-        if (auth()->id() !== $proposition->etudiant_id) {
+        if (!auth()->user()->isSuperAdmin() && auth()->id() !== $proposition->etudiant_id) {
             abort(403, 'Vous n\'êtes pas autorisé à modifier cette proposition');
         }
 
         // Ne peut modifier que si en attente
-        if ($proposition->statut !== 'en_attente') {
+        if (!auth()->user()->isSuperAdmin() && $proposition->statut !== 'en_attente') {
             return back()->with('error', 'Vous ne pouvez modifier que les propositions en attente');
         }
 
@@ -174,12 +191,12 @@ class PropositionThemeController extends Controller
     public function destroy(PropositionTheme $proposition)
     {
         // Seul l'étudiant propriétaire peut supprimer sa proposition
-        if (auth()->id() !== $proposition->etudiant_id) {
+        if (!auth()->user()->isSuperAdmin() && auth()->id() !== $proposition->etudiant_id) {
             abort(403, 'Vous n\'êtes pas autorisé à supprimer cette proposition');
         }
 
         // Ne peut supprimer que si en attente
-        if ($proposition->statut !== 'en_attente') {
+        if (!auth()->user()->isSuperAdmin() && $proposition->statut !== 'en_attente') {
             return back()->with('error', 'Vous ne pouvez supprimer que les propositions en attente');
         }
 
@@ -204,7 +221,7 @@ class PropositionThemeController extends Controller
             'user_id' => $proposition->etudiant_id,
             'type' => 'proposition_validee',
             'titre' => 'Proposition de thème validée',
-            'message' => 'Votre proposition de thème "' . $proposition->titre . '" a été validée.',
+            'message' => 'Votre thème a été validé',
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
@@ -233,7 +250,7 @@ class PropositionThemeController extends Controller
             'user_id' => $proposition->etudiant_id,
             'type' => 'proposition_refusee',
             'titre' => 'Proposition de thème refusée',
-            'message' => 'Votre proposition de thème "' . $proposition->titre . '" a été refusée. Commentaires : ' . $request->commentaires_admin,
+            'message' => 'Votre thème a été rejeté',
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
@@ -321,12 +338,12 @@ class PropositionThemeController extends Controller
             'user_id' => $proposition->etudiant_id,
             'type' => 'proposition_validee',
             'titre' => 'Proposition de thème validée',
-            'message' => 'Votre proposition de thème "' . $proposition->titre . '" a été validée par votre directeur de mémoire.',
+            'message' => 'Votre proposition de thème a été validée par votre Directeur de Mémoire',
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
         // Envoyer une notification par email à l'étudiant
-        $proposition->etudiant->notify(new PropositionThemeStatusNotification($proposition, 'valide'));
+        $proposition->etudiant->notify(new PropositionThemeStatusNotification($proposition, 'valide_dm'));
 
         return back()->with('success', 'Proposition validée avec succès');
     }
@@ -355,7 +372,7 @@ class PropositionThemeController extends Controller
             'user_id' => $proposition->etudiant_id,
             'type' => 'proposition_refusee',
             'titre' => 'Proposition de thème refusée',
-            'message' => 'Votre proposition de thème "' . $proposition->titre . '" a été refusée par votre directeur de mémoire.',
+            'message' => 'Votre thème a été rejeté',
             'lien' => route('propositions.show', $proposition->id),
         ]);
 
@@ -401,5 +418,18 @@ class PropositionThemeController extends Controller
 
         $fileName = 'Proposition_Theme_' . str_replace(' ', '_', $proposition->etudiant->name) . '.' . pathinfo($proposition->proposition_theme_path, PATHINFO_EXTENSION);
         return Storage::disk('public')->download($proposition->proposition_theme_path, $fileName);
+    }
+
+    private function envoyerEmailSoumission(User $destinataire, PropositionTheme $proposition): void
+    {
+        try {
+            $destinataire->notify(new PropositionThemeSubmittedNotification($proposition));
+        } catch (\Throwable $e) {
+            Log::error('Erreur lors de l\'envoi de l\'email de proposition de thème : ' . $e->getMessage(), [
+                'destinataire_id' => $destinataire->id,
+                'destinataire_email' => $destinataire->email,
+                'proposition_id' => $proposition->id,
+            ]);
+        }
     }
 }

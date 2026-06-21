@@ -13,11 +13,11 @@
         .header {
             text-align: left;
             margin-bottom: 20px;
-            border-bottom: 2px solid #2d3748;
+            border-bottom: 2px solid #0b1f4d;
             padding-bottom: 10px;
         }
         .header h1 {
-            color: #2d3748;
+            color: #0b1f4d;
             margin: 0 0 10px 0;
             font-size: 18px;
         }
@@ -32,7 +32,7 @@
             margin-top: 10px;
         }
         th {
-            background-color: #2d3748;
+            background-color: #0b1f4d;
             color: #ffffff;
             padding: 8px;
             text-align: left;
@@ -68,7 +68,7 @@
         <h1>Liste des Utilisateurs</h1>
         <p>Export généré le {{ $date_export }}</p>
         @if($role)
-            <p>Type d'utilisateur : <strong>{{ ucfirst($role) }}</strong></p>
+            <p>Type d'utilisateur : <strong>{{ \App\Models\User::roleLabels()[$role] ?? ucfirst($role) }}</strong></p>
         @endif
         @if($statut_inscription)
             <p>Statut : <strong>{{ ucfirst($statut_inscription) }}</strong></p>
@@ -95,7 +95,7 @@
                     <td>{{ $user->name }}</td>
                     <td>{{ $user->email }}</td>
                     <td>{{ $user->telephone ?? '-' }}</td>
-                    <td>{{ ucfirst($user->role) }}</td>
+                    <td>{{ $user->roleLabel() }}</td>
                     <td>{{ ucfirst($user->statut_inscription ?? 'valide') }}</td>
                     <td>{{ $user->est_actif ? 'Oui' : 'Non' }}</td>
                     <td>{{ $user->created_at->format('d/m/Y') }}</td>
@@ -114,4 +114,3 @@
     </div>
 </body>
 </html>
-

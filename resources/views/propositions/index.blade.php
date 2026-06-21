@@ -13,16 +13,16 @@
     </div>
     <div class="col-md-6 text-end">
         <div class="btn-group" role="group">
-            <a href="{{ route('propositions.index') }}" class="btn btn-sm {{ !request('filtre') ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.index') }}" class="btn btn-sm {{ !request('filtre') ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 Toutes
             </a>
-            <a href="{{ route('propositions.index', ['filtre' => 'en_attente']) }}" class="btn btn-sm {{ request('filtre') === 'en_attente' ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.index', ['filtre' => 'en_attente']) }}" class="btn btn-sm {{ request('filtre') === 'en_attente' ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 En attente
             </a>
-            <a href="{{ route('propositions.index', ['filtre' => 'valide']) }}" class="btn btn-sm {{ request('filtre') === 'valide' ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.index', ['filtre' => 'valide']) }}" class="btn btn-sm {{ request('filtre') === 'valide' ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 Validées
             </a>
-            <a href="{{ route('propositions.index', ['filtre' => 'refuse']) }}" class="btn btn-sm {{ request('filtre') === 'refuse' ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.index', ['filtre' => 'refuse']) }}" class="btn btn-sm {{ request('filtre') === 'refuse' ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 Refusées
             </a>
         </div>
@@ -36,13 +36,13 @@
                 <table class="table table-hover table-sm mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Étudiant</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Titre</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Directeur</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Destinataires</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Statut</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Date</th>
-                            <th class="border-0 py-2 text-center" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Actions</th>
+                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #0b1f4d;">Étudiant</th>
+                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #0b1f4d;">Titre</th>
+                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #0b1f4d;">Directeur</th>
+                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #0b1f4d;">Destinataires</th>
+                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #0b1f4d;">Statut</th>
+                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #0b1f4d;">Date</th>
+                            <th class="border-0 py-2 text-center" style="font-size: 0.65rem; font-weight: 600; color: #0b1f4d;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,11 +65,11 @@
                                 </td>
                                 <td class="py-2">
                                     @if($proposition->envoye_au_directeur && $proposition->envoye_a_l_admin)
-                                        <small class="badge bg-info">Directeur + Admin</small>
+                                        <small class="badge bg-info">Directeur + Responsable pedagogique</small>
                                     @elseif($proposition->envoye_au_directeur)
                                         <small class="badge bg-primary">Directeur</small>
                                     @elseif($proposition->envoye_a_l_admin)
-                                        <small class="badge bg-secondary">Admin</small>
+                                        <small class="badge bg-secondary">Responsable pedagogique</small>
                                     @else
                                         <small class="badge bg-light text-dark">Aucun</small>
                                     @endif

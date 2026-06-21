@@ -59,7 +59,7 @@ class OffreController extends Controller
             'date_debut' => 'nullable|date',
             'date_fin' => 'nullable|date|after_or_equal:date_debut',
             'lieu' => 'nullable|string|max:255',
-            'type_stage' => 'required|in:obligatoire,optionnel,projet_fin_etudes',
+            'type_stage' => 'required|in:Perfectionnement,Professionnel,Académique,Mémoire',
             'niveau_etude' => 'nullable|in:L1,L2,L3,M1,M2,Doctorat',
             'date_limite_candidature' => 'nullable|date',
             'nombre_places' => 'required|integer|min:1',

@@ -4,284 +4,196 @@
 @section('page-title', 'Tableau de bord')
 
 @section('content')
-@if(auth()->user()->isAdmin() && isset($stats['inscriptions_en_attente']) && $stats['inscriptions_en_attente'] > 0)
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        <strong>Attention !</strong> Il y a <strong>{{ $stats['inscriptions_en_attente'] }}</strong> inscription(s) en attente de validation.
-        <a href="{{ route('users.index') }}" class="alert-link ms-2">Voir les utilisateurs</a>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+@php
+    $metricCards = [];
+
+    if (auth()->user()->isAdmin()) {
+        $metricCards = [
+            ['label' => 'Utilisateurs', 'value' => $stats['utilisateurs'] ?? 0, 'icon' => 'fa-users', 'color' => 'primary'],
+            ['label' => 'Entreprises', 'value' => $stats['entreprises'] ?? 0, 'icon' => 'fa-building', 'color' => 'info'],
+            ['label' => 'Offres actives', 'value' => $stats['offres_actives'] ?? 0, 'icon' => 'fa-briefcase', 'color' => 'success'],
+            ['label' => 'Candidatures', 'value' => $stats['candidatures'] ?? 0, 'icon' => 'fa-file-signature', 'color' => 'warning'],
+        ];
+    } elseif (auth()->user()->isEntreprise()) {
+        $metricCards = [
+            ['label' => 'Mes offres', 'value' => $stats['mes_offres'] ?? 0, 'icon' => 'fa-briefcase', 'color' => 'primary'],
+            ['label' => 'Candidatures recues', 'value' => $stats['candidatures_recues'] ?? 0, 'icon' => 'fa-inbox', 'color' => 'info'],
+        ];
+    } elseif (auth()->user()->isEtudiant()) {
+        $metricCards = [
+            ['label' => 'Mes candidatures', 'value' => $stats['mes_candidatures'] ?? 0, 'icon' => 'fa-file-alt', 'color' => 'primary'],
+            ['label' => 'Offres disponibles', 'value' => $stats['offres_disponibles'] ?? 0, 'icon' => 'fa-search', 'color' => 'success'],
+        ];
+    } elseif (auth()->user()->isEnseignant()) {
+        $metricCards = [
+            ['label' => 'Etudiants encadres', 'value' => $stats['etudiants_encadres'] ?? 0, 'icon' => 'fa-user-graduate', 'color' => 'primary'],
+        ];
+    }
+@endphp
+
+@if(auth()->user()->isAdmin() && ($stats['inscriptions_en_attente'] ?? 0) > 0)
+    <div class="alert alert-warning d-flex align-items-center justify-content-between gap-3" role="alert">
+        <div>
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>{{ $stats['inscriptions_en_attente'] }}</strong> inscription(s) attendent une validation.
+        </div>
+        <a href="{{ route('users.index', ['statut_inscription' => 'en_attente']) }}" class="btn btn-sm btn-outline-dark">Traiter</a>
     </div>
 @endif
 
-<div class="row">
-    <!-- Statistiques générales -->
-    <div class="col-12">
-        <div class="row mb-4">
-            @if(auth()->user()->isAdmin())
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Total Utilisateurs</div>
-                                    <div class="stats-number">{{ $stats['total_users'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-users fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
+<div class="row g-3 mb-4">
+    @foreach($metricCards as $card)
+        <div class="col-xl-3 col-md-6">
+            <div class="card metric-card h-100">
+                <div class="card-body d-flex align-items-center justify-content-between gap-3">
+                    <div>
+                        <div class="metric-label">{{ $card['label'] }}</div>
+                        <div class="metric-value mt-2">{{ $card['value'] }}</div>
+                    </div>
+                    <div class="metric-icon">
+                        <i class="fas {{ $card['icon'] }}"></i>
                     </div>
                 </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Entreprises</div>
-                                    <div class="stats-number">{{ $stats['total_entreprises'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-building fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Offres Actives</div>
-                                    <div class="stats-number">{{ $stats['offres_actives'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-briefcase fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            @endif
-
-            @if(auth()->user()->isEtudiant())
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Mes Candidatures</div>
-                                    <div class="stats-number">{{ $stats['mes_candidatures'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-file-alt fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Offres Disponibles</div>
-                                    <div class="stats-number">{{ $stats['offres_disponibles'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-briefcase fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            @endif
-
-            @if(auth()->user()->isEntreprise())
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Mes Offres</div>
-                                    <div class="stats-number">{{ $stats['mes_offres'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-briefcase fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-uppercase mb-1">Candidatures Reçues</div>
-                                    <div class="stats-number">{{ $stats['candidatures_recues'] ?? 0 }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-inbox fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            @endif
+            </div>
         </div>
-    </div>
+    @endforeach
 </div>
 
-<div class="row">
-    <!-- Actions rapides -->
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-bolt me-2"></i>
-                    Actions rapides
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    @if(auth()->user()->isAdmin())
-                        <div class="col-md-6 mb-3">
-                            <a href="{{ route('entreprises.create') }}" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-building me-2"></i>
-                                Ajouter une entreprise
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="{{ route('users.create') }}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-user-plus me-2"></i>
-                                Créer un utilisateur
-                            </a>
-                        </div>
-                    @endif
-
-                    @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())
-                        <div class="col-md-6 mb-3">
-                            <a href="{{ route('offres.create') }}" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-plus me-2"></i>
-                                Publier une offre
-                            </a>
-                        </div>
-                    @endif
-
-                    @if(auth()->user()->isEtudiant())
-                        <div class="col-md-6 mb-3">
-                            <a href="{{ route('offres.index') }}" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-search me-2"></i>
-                                Rechercher des offres
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="{{ route('candidatures.create') }}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-paper-plane me-2"></i>
-                                Nouvelle candidature
-                            </a>
-                        </div>
-                    @endif
-
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notifications récentes -->
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0" style="font-size: 0.9rem;">
-                    <i class="fas fa-bell me-2"></i>
-                    Notifications récentes
-                </h5>
-                @if(isset($notificationsRecentes) && $notificationsRecentes->where('lu', false)->count() > 0)
-                    <span class="badge bg-danger">{{ $notificationsRecentes->where('lu', false)->count() }}</span>
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="fas fa-chart-line me-2 text-primary"></i>Vue analytique</span>
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('statistiques') }}" class="btn btn-sm btn-outline-primary">Details</a>
                 @endif
             </div>
-            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                @if(isset($notificationsRecentes) && $notificationsRecentes->count() > 0)
-                    @foreach($notificationsRecentes as $notification)
-                        <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
-                            <div class="flex-shrink-0 me-2">
-                                @if(!$notification->lu)
-                                    <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px; padding: 0;"></span>
-                                @else
-                                    <i class="fas fa-circle text-muted" style="font-size: 0.4rem;"></i>
-                                @endif
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="fw-semibold mb-1" style="font-size: 0.8rem;">{{ $notification->titre }}</div>
-                                <p class="text-muted mb-1" style="font-size: 0.75rem;">{{ Str::limit($notification->message, 60) }}</p>
-                                <small class="text-muted" style="font-size: 0.7rem;">{{ $notification->created_at->diffForHumans() }}</small>
-                                @if($notification->lien)
-                                    <div class="mt-1">
-                                        <a href="{{ $notification->lien }}" class="btn btn-sm btn-outline-primary" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">
-                                            Voir
-                                        </a>
-                                    </div>
-                                @endif
+            <div class="card-body">
+                @if(auth()->user()->isAdmin())
+                    <div class="row g-4">
+                        <div class="col-lg-7">
+                            <div class="chart-box">
+                                <canvas id="rolesChart"></canvas>
                             </div>
                         </div>
-                    @endforeach
-                    <div class="text-center mt-2">
-                        <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.75rem;">
-                            Voir toutes les notifications
-                        </a>
+                        <div class="col-lg-5">
+                            <div class="chart-box">
+                                <canvas id="propositionsChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 @else
-                    <p class="text-muted text-center" style="font-size: 0.8rem;">Aucune notification</p>
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-simple fa-3x text-primary mb-3"></i>
+                        <h5 class="mb-2">Votre espace est pret</h5>
+                        <p class="text-muted mb-0">Utilisez les actions rapides pour continuer votre workflow.</p>
+                    </div>
                 @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="fas fa-bell me-2 text-primary"></i>Notifications recentes</span>
+                <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="list-group list-group-flush">
+                @forelse($notificationsRecentes as $notification)
+                    <a href="{{ $notification->lien ?: route('notifications.index') }}" class="list-group-item list-group-item-action py-3">
+                        <div class="d-flex gap-3">
+                            <span class="badge-soft {{ $notification->lu ? 'badge-soft-secondary' : 'badge-soft-primary' }}">
+                                <i class="fas {{ $notification->lu ? 'fa-check' : 'fa-circle' }}"></i>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="fw-semibold">{{ $notification->titre }}</div>
+                                <div class="text-muted small">{{ Str::limit($notification->message, 90) }}</div>
+                                <div class="text-muted small mt-1">{{ $notification->created_at->diffForHumans() }}</div>
+                            </div>
+                        </div>
+                    </a>
+                @empty
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">Aucune notification recente.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
 </div>
 
-<!-- Graphiques et statistiques avancées -->
-@if(auth()->user()->isAdmin())
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    Statistiques avancées
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Répartition des utilisateurs par rôle</h6>
-                        <div class="progress mb-2">
-                            <div class="progress-bar" role="progressbar" style="width: {{ $stats['pourcentage_etudiants'] ?? 0 }}%">
-                                Étudiants: {{ $stats['pourcentage_etudiants'] ?? 0 }}%
-                            </div>
-                        </div>
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $stats['pourcentage_entreprises'] ?? 0 }}%">
-                                Entreprises: {{ $stats['pourcentage_entreprises'] ?? 0 }}%
-                            </div>
-                        </div>
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $stats['pourcentage_enseignants'] ?? 0 }}%">
-                                Enseignants: {{ $stats['pourcentage_enseignants'] ?? 0 }}%
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-bolt me-2 text-primary"></i>Actions rapides
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            @if(auth()->user()->isAdmin())
+                <div class="col-md-3"><a href="{{ route('users.create') }}" class="btn btn-primary w-100"><i class="fas fa-user-plus me-2"></i>Utilisateur</a></div>
+                <div class="col-md-3"><a href="{{ route('entreprises.create') }}" class="btn btn-outline-primary w-100"><i class="fas fa-building me-2"></i>Entreprise</a></div>
+                <div class="col-md-3"><a href="{{ route('users.index') }}" class="btn btn-outline-primary w-100"><i class="fas fa-table me-2"></i>Annuaire</a></div>
+                <div class="col-md-3"><a href="{{ route('statistiques') }}" class="btn btn-outline-primary w-100"><i class="fas fa-chart-pie me-2"></i>Statistiques</a></div>
+            @elseif(auth()->user()->isEntreprise())
+                <div class="col-md-4"><a href="{{ route('offres.create') }}" class="btn btn-primary w-100"><i class="fas fa-plus me-2"></i>Publier une offre</a></div>
+                <div class="col-md-4"><a href="{{ route('offres.mes') }}" class="btn btn-outline-primary w-100"><i class="fas fa-list me-2"></i>Mes offres</a></div>
+                <div class="col-md-4"><a href="{{ route('candidatures.recues') }}" class="btn btn-outline-primary w-100"><i class="fas fa-inbox me-2"></i>Candidatures</a></div>
+            @elseif(auth()->user()->isEtudiant())
+                <div class="col-md-4"><a href="{{ route('offres.disponibles') }}" class="btn btn-primary w-100"><i class="fas fa-search me-2"></i>Voir les offres</a></div>
+                <div class="col-md-4"><a href="{{ route('candidatures.mes') }}" class="btn btn-outline-primary w-100"><i class="fas fa-file-alt me-2"></i>Mes candidatures</a></div>
+                <div class="col-md-4"><a href="{{ route('propositions.create') }}" class="btn btn-outline-primary w-100"><i class="fas fa-plus-circle me-2"></i>Proposition</a></div>
+            @elseif(auth()->user()->isEnseignant())
+                <div class="col-md-6"><a href="{{ route('demandes-encadrement.index') }}" class="btn btn-primary w-100"><i class="fas fa-user-graduate me-2"></i>Demandes</a></div>
+                <div class="col-md-6"><a href="{{ route('propositions.encadrees') }}" class="btn btn-outline-primary w-100"><i class="fas fa-inbox me-2"></i>Propositions</a></div>
+            @endif
         </div>
     </div>
 </div>
-@endif
 @endsection
+
+@if(auth()->user()->isAdmin())
+@push('scripts')
+<script>
+    const chartColors = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b'];
+    const roles = @json($charts['roles']);
+    const propositions = @json($charts['propositions']);
+
+    new Chart(document.getElementById('rolesChart'), {
+        type: 'bar',
+        data: {
+            labels: roles.labels,
+            datasets: [{
+                label: 'Utilisateurs',
+                data: roles.data,
+                backgroundColor: chartColors,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+
+    new Chart(document.getElementById('propositionsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: propositions.labels,
+            datasets: [{
+                data: propositions.data,
+                backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+</script>
+@endpush
+@endif

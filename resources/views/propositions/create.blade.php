@@ -7,29 +7,24 @@
 <div class="row">
     <div class="col-lg-8 mx-auto">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            {{-- <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-file-alt me-2"></i>
                     Nouvelle proposition de thème
                 </h5>
-                <a href="{{ route('propositions.mes') }}" class="btn btn-light btn-sm">
-                    <i class="fas fa-arrow-left me-1"></i>
-                    Retour
-                </a>
-            </div>
+            </div> --}}
             <div class="card-body">
                 <form action="{{ route('propositions.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    <!-- Informations générales -->
-                    <div class="row mb-4">
+                    {{-- <div class="row mb-4">
                         <div class="col-md-12">
                             <h6 class="text-muted mb-3">
                                 <i class="fas fa-info-circle me-2"></i>
                                 Informations générales
                             </h6>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="row mb-3">
                         <div class="col-md-12">
@@ -74,24 +69,45 @@
 
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <label for="directeur_memoire_id" class="form-label fw-bold">Directeur de mémoire</label>
-                            <select class="form-select @error('directeur_memoire_id') is-invalid @enderror"
-                                    id="directeur_memoire_id" name="directeur_memoire_id">
-                                <option value="">Sélectionner un directeur de mémoire</option>
-                                @foreach($enseignants as $enseignant)
-                                    <option value="{{ $enseignant->id }}"
-                                            {{ old('directeur_memoire_id') == $enseignant->id ? 'selected' : '' }}>
-                                        {{ $enseignant->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('directeur_memoire_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-users me-2"></i>
+                                Destinataires
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check border rounded p-3 h-100">
+                                        <input class="form-check-input @error('envoyer_au_directeur') is-invalid @enderror" type="checkbox" id="envoyer_au_directeur" name="envoyer_au_directeur" value="1" @checked(old('envoyer_au_directeur'))>
+                                        <label class="form-check-label fw-bold" for="envoyer_au_directeur">
+                                            Directeur de Mémoire (DM)
+                                        </label>
+                                        <div class="form-text">
+                                            @if($directeur)
+                                                {{ $directeur->name }}
+                                            @else
+                                                Aucun Directeur de Mémoire sélectionné.
+                                            @endif
+                                        </div>
+                                        @error('envoyer_au_directeur')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check border rounded p-3 h-100">
+                                        <input class="form-check-input" type="checkbox" id="envoyer_a_l_admin" name="envoyer_a_l_admin" value="1" @checked(old('envoyer_a_l_admin'))>
+                                        <label class="form-check-label fw-bold" for="envoyer_a_l_admin">
+                                            Responsable pedagogique
+                                        </label>
+                                        <div class="form-text">Envoyer aussi à l'administration.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            @error('destinataires')
+                                <div class="alert alert-danger mt-3 mb-0">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
 
-                    <!-- Documents -->
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <h6 class="text-muted mb-3">
@@ -122,59 +138,8 @@
                         </div>
                     </div>
 
-                    <!-- Destinataires -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <h6 class="text-muted mb-3">
-                                <i class="fas fa-users me-2"></i>
-                                Destinataires de la proposition
-                            </h6>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Sélectionnez au moins un destinataire pour votre proposition de thème.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="envoyer_au_directeur" name="envoyer_au_directeur" value="1"
-                                       {{ old('envoyer_au_directeur') ? 'checked' : '' }}>
-                                <label class="form-check-label fw-bold" for="envoyer_au_directeur">
-                                    <i class="fas fa-user-tie me-2"></i>
-                                    Envoyer à mon directeur de mémoire
-                                </label>
-                                <div class="form-text">Pour validation par votre directeur de mémoire</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="envoyer_a_l_admin" name="envoyer_a_l_admin" value="1"
-                                       {{ old('envoyer_a_l_admin') ? 'checked' : '' }}>
-                                <label class="form-check-label fw-bold" for="envoyer_a_l_admin">
-                                    <i class="fas fa-user-shield me-2"></i>
-                                    Envoyer à l'administrateur
-                                </label>
-                                <div class="form-text">Pour validation administrative</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @error('destinataires')
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            {{ $message }}
-                        </div>
-                    @enderror
-
-                    <!-- Boutons -->
                     <div class="row">
                         <div class="col-12 text-end">
-                            <a href="{{ route('propositions.mes') }}" class="btn btn-secondary me-2">
-                                <i class="fas fa-times me-1"></i>
-                                Annuler
-                            </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-paper-plane me-1"></i>
                                 Soumettre la proposition

@@ -16,6 +16,23 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('offres.store') }}">
                     @csrf
+
+                    @if(auth()->user()->isAdmin())
+                        <div class="mb-3">
+                            <label for="entreprise_id" class="form-label">Entreprise associee *</label>
+                            <select class="form-select @error('entreprise_id') is-invalid @enderror" id="entreprise_id" name="entreprise_id" required>
+                                <option value="">Selectionnez une entreprise</option>
+                                @foreach($entreprises as $entreprise)
+                                    <option value="{{ $entreprise->id }}" {{ (int) old('entreprise_id', request('entreprise_id')) === $entreprise->id ? 'selected' : '' }}>
+                                        {{ $entreprise->nom }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('entreprise_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                     
                     <div class="mb-3">
                         <label for="titre" class="form-label">Titre de l'offre *</label>
@@ -291,27 +308,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="statut" class="form-label">Statut de publication</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" 
-                                   type="checkbox" 
-                                   id="statut" 
-                                   name="statut" 
-                                   value="active" 
-                                   {{ old('statut') == 'active' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="statut">
-                                Publier immédiatement
-                            </label>
-                        </div>
-                        <small class="text-muted">Décochez pour sauvegarder en brouillon</small>
-                    </div>
-
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ route('offres.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>
-                            Annuler
-                        </a>
+                    <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>
                             Publier l'offre

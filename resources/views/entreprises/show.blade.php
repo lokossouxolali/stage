@@ -5,33 +5,33 @@
 
 @section('content')
 <div class="row">
-    <div class="col-lg-8">
+    <div class="{{ auth()->user()->isEtudiant() ? 'col-12' : 'col-lg-8' }}">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-building me-2"></i>
                     {{ $entreprise->nom }}
                 </h5>
+                @if(!auth()->user()->isEtudiant())
                 <div>
                     <a href="{{ route('entreprises.edit', $entreprise) }}" class="btn btn-warning btn-sm">
                         <i class="fas fa-edit me-1"></i>
                         Modifier
                     </a>
-                    <a href="{{ route('entreprises.index') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i>
-                        Retour
-                    </a>
                 </div>
+                @endif
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="text-muted mb-3">Informations générales</h6>
                         
+                        @if(!auth()->user()->isEtudiant())
                         <div class="mb-3">
                             <label class="form-label fw-bold">Nom de l'entreprise</label>
                             <p class="form-control-plaintext">{{ $entreprise->nom }}</p>
                         </div>
+                        @endif
                         
                         <div class="mb-3">
                             <label class="form-label fw-bold">Email</label>
@@ -127,6 +127,7 @@
         </div>
     </div>
     
+    @if(!auth()->user()->isEtudiant())
     <div class="col-lg-4">
         <!-- Statistiques -->
         <div class="card mb-4">
@@ -181,6 +182,7 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <!-- Offres de l'entreprise -->
@@ -246,7 +248,7 @@
 @endif
 
 <!-- Utilisateurs de l'entreprise -->
-@if($entreprise->users->count() > 0)
+@if(!auth()->user()->isEtudiant() && $entreprise->users->count() > 0)
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">

@@ -24,20 +24,13 @@
                                 Photo de profil
                             </label>
                             <div class="d-flex align-items-center gap-3">
-                                <div class="profile-photo-preview">
+                                <div class="profile-photo-preview rounded-circle d-flex align-items-center justify-content-center overflow-hidden">
                                     @if(auth()->user()->photo_path && auth()->user()->photo_url)
-                                        <img src="{{ auth()->user()->photo_url }}" alt="Photo de profil" 
-                                             class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #e5e7eb;"
-                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                        <div class="profile-avatar-preview rounded-circle d-flex align-items-center justify-content-center" 
-                                             style="width: 80px; height: 80px; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: white; font-size: 1.75rem; font-weight: 600; display: none;">
-                                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                                        </div>
+                                        <img id="photoPreviewImage" src="{{ auth()->user()->photo_url }}" alt="Photo de profil" onerror="showAvatarFallback()">
+                                        <span id="photoPreviewFallback" style="display: none;">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                                     @else
-                                        <div class="profile-avatar-preview rounded-circle d-flex align-items-center justify-content-center" 
-                                             style="width: 80px; height: 80px; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: white; font-size: 1.75rem; font-weight: 600;">
-                                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                                        </div>
+                                        <img id="photoPreviewImage" src="" alt="Photo de profil" style="display: none;">
+                                        <span id="photoPreviewFallback">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                                     @endif
                                 </div>
                                 <div class="flex-grow-1">
@@ -92,10 +85,6 @@
                     </div>
                     
                     <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                        <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-times me-1"></i>
-                            Annuler
-                        </a>
                         <button type="submit" class="btn btn-dark btn-sm">
                             <i class="fas fa-save me-1"></i>
                             Mettre à jour
@@ -115,8 +104,8 @@
     }
 
     .btn-dark {
-        background-color: #1f2937;
-        border-color: #1f2937;
+        background-color: #081a3d;
+        border-color: #081a3d;
         color: #ffffff;
     }
 
@@ -128,17 +117,34 @@
 
     .btn-outline-secondary {
         border-color: #d1d5db;
-        color: #6b7280;
+        color: #31527f;
     }
 
     .btn-outline-secondary:hover {
         background-color: #f3f4f6;
         border-color: #d1d5db;
-        color: #374151;
+        color: #123a7a;
     }
 
     .form-control-sm {
         padding: 0.375rem 0.75rem;
+    }
+
+    .profile-photo-preview {
+        width: 80px;
+        height: 80px;
+        border: 2px solid #e5e7eb;
+        background: linear-gradient(135deg, #081a3d 0%, #123a7a 100%);
+        color: #ffffff;
+        font-size: 1.75rem;
+        font-weight: 600;
+        flex: 0 0 80px;
+    }
+
+    .profile-photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 </style>
 @push('scripts')
@@ -147,11 +153,20 @@
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const preview = document.querySelector('.profile-photo-preview');
-                preview.innerHTML = `<img src="${e.target.result}" alt="Photo de profil" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #e5e7eb;">`;
+                const image = document.getElementById('photoPreviewImage');
+                const fallback = document.getElementById('photoPreviewFallback');
+
+                image.src = e.target.result;
+                image.style.display = 'block';
+                fallback.style.display = 'none';
             };
             reader.readAsDataURL(input.files[0]);
         }
+    }
+
+    function showAvatarFallback() {
+        document.getElementById('photoPreviewImage').style.display = 'none';
+        document.getElementById('photoPreviewFallback').style.display = 'inline';
     }
 </script>
 @endpush

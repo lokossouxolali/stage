@@ -13,16 +13,16 @@
     </div>
     <div class="col-md-6 text-end">
         <div class="btn-group" role="group">
-            <a href="{{ route('propositions.encadrees') }}" class="btn btn-sm {{ !request('filtre') ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.encadrees') }}" class="btn btn-sm {{ !request('filtre') ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 Toutes
             </a>
-            <a href="{{ route('propositions.encadrees', ['filtre' => 'en_attente']) }}" class="btn btn-sm {{ request('filtre') === 'en_attente' ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.encadrees', ['filtre' => 'en_attente']) }}" class="btn btn-sm {{ request('filtre') === 'en_attente' ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 En attente
             </a>
-            <a href="{{ route('propositions.encadrees', ['filtre' => 'valide']) }}" class="btn btn-sm {{ request('filtre') === 'valide' ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.encadrees', ['filtre' => 'valide']) }}" class="btn btn-sm {{ request('filtre') === 'valide' ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 Validées
             </a>
-            <a href="{{ route('propositions.encadrees', ['filtre' => 'refuse']) }}" class="btn btn-sm {{ request('filtre') === 'refuse' ? 'active' : '' }}" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.encadrees', ['filtre' => 'refuse']) }}" class="btn btn-sm {{ request('filtre') === 'refuse' ? 'active' : '' }}" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 Refusées
             </a>
         </div>
@@ -121,7 +121,6 @@
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                         <button type="submit" class="btn btn-danger">Refuser</button>
                                     </div>
                                 </form>

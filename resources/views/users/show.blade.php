@@ -14,10 +14,6 @@
                         {{ $user->name }}
                     </h5>
                     <div>
-                        <a href="{{ route('users.index') }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-arrow-left me-2"></i>
-                            Retour
-                        </a>
                     </div>
                 </div>
             </div>
@@ -39,8 +35,12 @@
                         @endif
                         <h5>{{ $user->name }}</h5>
                         @switch($user->role)
+                            @case('super_admin')
+                                <span class="badge bg-danger fs-6">Super Administrateur</span>
+                                @break
+                            @case('responsable_pedagogique')
                             @case('admin')
-                                <span class="badge bg-danger fs-6">Administrateur</span>
+                                <span class="badge bg-warning fs-6">Responsable Pedagogique</span>
                                 @break
                             @case('etudiant')
                                 <span class="badge bg-primary fs-6">Étudiant</span>
@@ -65,7 +65,7 @@
                             
                             <div class="col-sm-6 mb-3">
                                 <label class="form-label fw-bold">Rôle</label>
-                                <p class="text-muted">{{ ucfirst($user->role) }}</p>
+                                <p class="text-muted">{{ $user->roleLabel() }}</p>
                             </div>
                             
                             <div class="col-sm-6 mb-3">

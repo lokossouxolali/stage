@@ -39,7 +39,7 @@
     <div class="content">
         <p>Bonjour <strong>{{ $user->name }}</strong>,</p>
         
-        <p>Nous avons le plaisir de vous informer que votre inscription sur la plateforme de gestion de stages a été <strong>validée</strong> par l'administrateur.</p>
+        <p>Nous avons le plaisir de vous informer que votre inscription sur la plateforme de gestion de stages a été <strong>validée</strong> par un responsable pedagogique.</p>
         
         <p>Vous pouvez maintenant vous connecter à votre compte en utilisant les identifiants que vous avez fournis lors de votre inscription :</p>
         
@@ -79,6 +79,5 @@
     </div>
 </body>
 </html>
-
 
 

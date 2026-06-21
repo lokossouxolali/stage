@@ -28,6 +28,7 @@ class EntrepriseController extends Controller
             'email' => 'required|email|max:255',
             'secteur_activite' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'site_web' => 'nullable|url|max:255',
         ]);
 
         Entreprise::create($request->all());
@@ -56,6 +57,7 @@ class EntrepriseController extends Controller
             'email' => 'required|email|max:255',
             'secteur_activite' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'site_web' => 'nullable|url|max:255',
         ]);
 
         $entreprise->update($request->all());

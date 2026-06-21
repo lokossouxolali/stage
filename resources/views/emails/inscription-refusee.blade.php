@@ -46,7 +46,7 @@
     <div class="content">
         <p>Bonjour <strong>{{ $user->name }}</strong>,</p>
         
-        <p>Nous vous informons que votre demande d'inscription sur la plateforme de gestion de stages a été <strong>refusée</strong> par l'administrateur.</p>
+        <p>Nous vous informons que votre demande d'inscription sur la plateforme de gestion de stages a été <strong>refusée</strong> par un responsable pedagogique.</p>
         
         <div class="info-box">
             <p><strong>Informations sur votre compte :</strong></p>
@@ -70,7 +70,7 @@
             </ul>
         </div>
         
-        <p>Si vous pensez qu'il s'agit d'une erreur ou si vous souhaitez obtenir plus d'informations concernant ce refus, nous vous invitons à contacter l'administrateur de la plateforme.</p>
+        <p>Si vous pensez qu'il s'agit d'une erreur ou si vous souhaitez obtenir plus d'informations concernant ce refus, nous vous invitons à contacter un responsable pedagogique de la plateforme.</p>
         
         <p>Vous pouvez également soumettre une nouvelle demande d'inscription si vous le souhaitez.</p>
         
@@ -83,7 +83,6 @@
     </div>
 </body>
 </html>
-
 
 
 

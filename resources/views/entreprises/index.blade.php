@@ -171,7 +171,6 @@
                 <p class="text-danger"><strong>Cette action est irréversible.</strong></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 <form id="deleteForm" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')

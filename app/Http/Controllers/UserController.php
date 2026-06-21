@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Notification;
+use App\Models\PasswordChangeOtp;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use App\Mail\InscriptionValidee;
 use App\Mail\InscriptionRefusee;
 use App\Mail\DemandeDirecteurMemoire;
 use App\Mail\ReponseDirecteurMemoire;
+use App\Mail\OtpCodeMail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -22,15 +25,52 @@ use PhpOffice\PhpSpreadsheet\Style\Color;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('entreprise', 'directeurMemoire')->paginate(10);
-        return view('users.index', compact('users'));
+        $query = User::with('entreprise', 'directeurMemoire');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($subQuery) use ($search) {
+                $subQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('telephone', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('statut_inscription')) {
+            $query->where('statut_inscription', $request->statut_inscription);
+        }
+
+        if ($request->filled('activity')) {
+            $query->where('est_actif', $request->activity === 'active');
+        }
+
+        $users = $query->latest()->paginate(10)->withQueryString();
+
+        $summary = [
+            'total' => User::count(),
+            'active' => User::where('est_actif', true)->count(),
+            'pending' => User::where('statut_inscription', 'en_attente')->count(),
+            'admins' => User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_LEGACY_ADMIN])->count(),
+            'super_admins' => User::where('role', User::ROLE_SUPER_ADMIN)->count(),
+        ];
+
+        $roleLabels = User::roleLabels();
+        unset($roleLabels[User::ROLE_LEGACY_ADMIN]);
+
+        return view('users.index', compact('users', 'summary', 'roleLabels'));
     }
 
     public function create()
     {
-        return view('users.create');
+        $roleLabels = $this->assignableRoleLabels();
+
+        return view('users.create', compact('roleLabels'));
     }
 
     public function store(Request $request)
@@ -39,7 +79,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,etudiant,entreprise,enseignant',
+            'role' => ['required', Rule::in(array_keys($this->assignableRoleLabels()))],
+            'est_actif' => 'nullable|boolean',
         ]);
 
         User::create([
@@ -47,6 +88,8 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'statut_inscription' => 'valide',
+            'est_actif' => $request->boolean('est_actif', true),
         ]);
 
         return redirect()->route('users.index')
@@ -58,21 +101,46 @@ class UserController extends Controller
         return view('users.show', compact('user'));
     }
 
+    public function photo(User $user)
+    {
+        if (!$user->photo_path || !Storage::disk('public')->exists($user->photo_path)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('public')->path($user->photo_path));
+    }
+
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+            abort(403, 'Seul le Super Administrateur peut gerer un compte Super Administrateur.');
+        }
+
+        $roleLabels = $this->assignableRoleLabels($user);
+
+        return view('users.edit', compact('user', 'roleLabels'));
     }
 
     public function update(Request $request, User $user)
     {
+        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+            abort(403, 'Seul le Super Administrateur peut gerer un compte Super Administrateur.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,etudiant,entreprise,enseignant',
+            'role' => ['required', Rule::in(array_keys($this->assignableRoleLabels($user)))],
+            'est_actif' => 'nullable|boolean',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        if (!auth()->user()->isSuperAdmin() && $request->role !== $user->role) {
+            abort(403, 'Seul le Super Administrateur peut modifier le role d\'un utilisateur.');
+        }
+
         $data = $request->only(['name', 'email', 'role']);
+        $data['est_actif'] = $request->boolean('est_actif');
 
         // Gestion de la photo de profil
         if ($request->hasFile('photo')) {
@@ -93,6 +161,14 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+            abort(403, 'Seul le Super Administrateur peut supprimer un autre Super Administrateur.');
+        }
+
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')
@@ -136,6 +212,7 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        auth()->setUser($user->fresh());
 
         return redirect()->route('profile.show')
             ->with('success', 'Profil mis à jour avec succès');
@@ -148,21 +225,67 @@ class UserController extends Controller
 
     public function updatePassword(Request $request)
     {
+        $user = auth()->user();
+
+        if ($request->filled('otp_code')) {
+            $request->validate([
+                'otp_code' => 'required|digits:6',
+            ]);
+
+            $otp = PasswordChangeOtp::where('user_id', $user->id)
+                ->whereNull('used_at')
+                ->latest()
+                ->first();
+
+            if (!$otp) {
+                return back()->withErrors(['otp_code' => 'Aucune demande de changement de mot de passe en attente.']);
+            }
+
+            if ($otp->expires_at->isPast()) {
+                return back()->withErrors(['otp_code' => 'Le code OTP a expire. Veuillez recommencer.']);
+            }
+
+            if (!Hash::check($request->otp_code, $otp->otp_hash)) {
+                return back()
+                    ->withErrors(['otp_code' => 'Code OTP incorrect.'])
+                    ->with('password_change_pending', true);
+            }
+
+            $user->update(['password' => $otp->password_hash]);
+            $otp->update(['used_at' => now()]);
+
+            return redirect()->route('profile.show')
+                ->with('success', 'Mot de passe mis a jour avec succes');
+        }
+
         $request->validate([
             'current_password' => 'required',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = auth()->user();
-
         if (!Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Le mot de passe actuel est incorrect']);
         }
 
-        $user->update(['password' => Hash::make($request->password)]);
+        PasswordChangeOtp::where('user_id', $user->id)->whereNull('used_at')->delete();
 
-        return redirect()->route('profile.show')
-            ->with('success', 'Mot de passe mis à jour avec succès');
+        $otpCode = (string) random_int(100000, 999999);
+        PasswordChangeOtp::create([
+            'user_id' => $user->id,
+            'otp_hash' => Hash::make($otpCode),
+            'password_hash' => Hash::make($request->password),
+            'expires_at' => now()->addMinutes(5),
+        ]);
+
+        try {
+            Mail::to($user->email)->send(new OtpCodeMail($otpCode, 'le changement de votre mot de passe'));
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'envoi du OTP de mot de passe : ' . $e->getMessage());
+        }
+
+        return back()
+            ->with('success', 'Un code OTP a ete envoye a votre email. Il expire dans 5 minutes.')
+            ->with('password_change_pending', true);
     }
 
     public function autocomplete(Request $request)
@@ -189,7 +312,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'type' => 'inscription_validee',
                 'titre' => 'Inscription validée',
-                'message' => 'Votre inscription a été validée par l\'administrateur. Vous pouvez maintenant vous connecter à votre compte.',
+                'message' => 'Votre inscription a été validée par un responsable pedagogique. Vous pouvez maintenant vous connecter à votre compte.',
                 'lien' => route('login'),
             ]);
             
@@ -203,7 +326,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'type' => 'inscription_validee',
                 'titre' => 'Inscription validée',
-                'message' => 'Votre inscription a été validée par l\'administrateur. Vous pouvez maintenant vous connecter à votre compte.',
+                'message' => 'Votre inscription a été validée par un responsable pedagogique. Vous pouvez maintenant vous connecter à votre compte.',
                 'lien' => route('login'),
             ]);
             
@@ -224,7 +347,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'type' => 'inscription_refusee',
                 'titre' => 'Inscription refusée',
-                'message' => 'Votre inscription a été refusée par l\'administrateur. Veuillez contacter l\'administration pour plus d\'informations.',
+                'message' => 'Votre inscription a été refusée par un responsable pedagogique. Veuillez contacter l\'administration pour plus d\'informations.',
                 'lien' => null,
             ]);
             
@@ -238,7 +361,7 @@ class UserController extends Controller
                 'user_id' => $user->id,
                 'type' => 'inscription_refusee',
                 'titre' => 'Inscription refusée',
-                'message' => 'Votre inscription a été refusée par l\'administrateur. Veuillez contacter l\'administration pour plus d\'informations.',
+                'message' => 'Votre inscription a été refusée par un responsable pedagogique. Veuillez contacter l\'administration pour plus d\'informations.',
                 'lien' => null,
             ]);
             
@@ -401,7 +524,7 @@ class UserController extends Controller
     {
         $request->validate([
             'format' => 'required|in:excel,pdf',
-            'role' => 'nullable|in:admin,etudiant,enseignant,entreprise,responsable_stages',
+            'role' => ['nullable', Rule::in(array_keys(User::roleLabels()))],
             'statut_inscription' => 'nullable|in:valide,en_attente,refuse',
         ]);
 
@@ -422,7 +545,7 @@ class UserController extends Controller
 
         if ($format === 'excel') {
             // Export Excel avec PhpSpreadsheet
-            $roleLabel = $request->role ? ucfirst($request->role) : 'Tous';
+            $roleLabel = $request->role ? (User::roleLabels()[$request->role] ?? ucfirst($request->role)) : 'Tous';
             $filename = 'utilisateurs_' . $roleLabel . '_' . date('Y-m-d_H-i-s') . '.xlsx';
             
             $spreadsheet = new Spreadsheet();
@@ -443,7 +566,7 @@ class UserController extends Controller
             $row++;
             
             if ($request->role) {
-                $sheet->setCellValue('A' . $row, 'Type d\'utilisateur : ' . ucfirst($request->role));
+                $sheet->setCellValue('A' . $row, 'Type d\'utilisateur : ' . (User::roleLabels()[$request->role] ?? ucfirst($request->role)));
                 $sheet->getStyle('A' . $row)->getFont()->setBold(true);
                 $row++;
             }
@@ -485,7 +608,7 @@ class UserController extends Controller
                 $sheet->setCellValue('B' . $row, $user->name);
                 $sheet->setCellValue('C' . $row, $user->email);
                 $sheet->setCellValue('D' . $row, $user->telephone ?? '-');
-                $sheet->setCellValue('E' . $row, ucfirst($user->role));
+                $sheet->setCellValue('E' . $row, $user->roleLabel());
                 $sheet->setCellValue('F' . $row, ucfirst($user->statut_inscription ?? 'valide'));
                 $sheet->setCellValue('G' . $row, $user->est_actif ? 'Oui' : 'Non');
                 $sheet->setCellValue('H' . $row, $user->entreprise ? $user->entreprise->nom : '-');
@@ -532,7 +655,7 @@ class UserController extends Controller
             return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
         } else {
             // Export PDF
-            $roleLabel = $request->role ? ucfirst($request->role) : 'Tous';
+            $roleLabel = $request->role ? (User::roleLabels()[$request->role] ?? ucfirst($request->role)) : 'Tous';
             $filename = 'utilisateurs_' . $roleLabel . '_' . date('Y-m-d_H-i-s') . '.pdf';
             
             $data = [
@@ -578,5 +701,27 @@ class UserController extends Controller
             ->paginate(10);
 
         return view('users.etudiants-encadres', compact('etudiants'));
+    }
+
+    private function assignableRoleLabels(?User $targetUser = null): array
+    {
+        $roles = User::roleLabels();
+        unset($roles[User::ROLE_LEGACY_ADMIN]);
+
+        if ($targetUser && $targetUser->role === User::ROLE_LEGACY_ADMIN) {
+            $roles[User::ROLE_LEGACY_ADMIN] = User::ROLE_LABELS[User::ROLE_LEGACY_ADMIN];
+        }
+
+        if (auth()->user()->isSuperAdmin()) {
+            return $roles;
+        }
+
+        if ($targetUser && $targetUser->role === User::ROLE_SUPER_ADMIN) {
+            return [User::ROLE_SUPER_ADMIN => $roles[User::ROLE_SUPER_ADMIN]];
+        }
+
+        unset($roles[User::ROLE_SUPER_ADMIN]);
+
+        return $roles;
     }
 }

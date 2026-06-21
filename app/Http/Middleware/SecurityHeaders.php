@@ -17,6 +17,20 @@ class SecurityHeaders
     {
         $response = $next($request);
 
+        $contentType = $response->headers->get('Content-Type');
+        $lowerContentType = strtolower((string) $contentType);
+        $shouldForceUtf8 = str_starts_with($lowerContentType, 'text/')
+            || str_starts_with($lowerContentType, 'application/json')
+            || str_starts_with($lowerContentType, 'application/javascript');
+
+        if ($contentType && $shouldForceUtf8 && !str_contains($lowerContentType, 'charset=')) {
+            $response->headers->set('Content-Type', $contentType . '; charset=UTF-8');
+        }
+
+        if ($contentType === null && $response->getContent() !== false) {
+            $response->headers->set('Content-Type', 'text/html; charset=UTF-8');
+        }
+
         // Headers de sécurité
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');

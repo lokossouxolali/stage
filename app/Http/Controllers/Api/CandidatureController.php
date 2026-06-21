@@ -46,7 +46,7 @@ class CandidatureController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'offre_id' => 'required|exists:offres,id',
-            'lettre_motivation' => 'nullable|string',
+            'lettre_motivation' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
             'cv' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
             'lettre_recommandation' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
             'commentaires_etudiant' => 'nullable|string',
@@ -102,10 +102,15 @@ class CandidatureController extends Controller
 
         // Gestion des fichiers
         $cvPath = null;
+        $lettreMotivationPath = null;
         $lettreRecommandationPath = null;
 
         if ($request->hasFile('cv')) {
             $cvPath = $request->file('cv')->store('candidatures/cv', 'public');
+        }
+
+        if ($request->hasFile('lettre_motivation')) {
+            $lettreMotivationPath = $request->file('lettre_motivation')->store('candidatures/lettres-motivation', 'public');
         }
 
         if ($request->hasFile('lettre_recommandation')) {
@@ -115,7 +120,7 @@ class CandidatureController extends Controller
         $candidature = Candidature::create([
             'etudiant_id' => $user->id,
             'offre_id' => $request->offre_id,
-            'lettre_motivation' => $request->lettre_motivation,
+            'lettre_motivation_path' => $lettreMotivationPath,
             'cv_path' => $cvPath,
             'lettre_recommandation_path' => $lettreRecommandationPath,
             'commentaires_etudiant' => $request->commentaires_etudiant,
@@ -226,6 +231,10 @@ class CandidatureController extends Controller
         // Supprimer les fichiers associés
         if ($candidature->cv_path) {
             Storage::disk('public')->delete($candidature->cv_path);
+        }
+
+        if ($candidature->lettre_motivation_path) {
+            Storage::disk('public')->delete($candidature->lettre_motivation_path);
         }
 
         if ($candidature->lettre_recommandation_path) {

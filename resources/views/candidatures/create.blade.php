@@ -40,25 +40,25 @@
                     <input type="hidden" name="offre_id" value="{{ $offre->id }}">
                     
                     <div class="mb-3">
-                        <label for="lettre_motivation" class="form-label">Lettre de motivation *</label>
+                        <label for="lettre_motivation" class="form-label">Lettre de motivation (PDF, DOCX) *</label>
                         <div class="input-group">
                             <span class="input-group-text">
-                                <i class="fas fa-file-text"></i>
+                                <i class="fas fa-file-alt"></i>
                             </span>
-                            <textarea class="form-control @error('lettre_motivation') is-invalid @enderror" 
-                                      id="lettre_motivation" 
-                                      name="lettre_motivation" 
-                                      rows="8" 
-                                      required 
-                                      autofocus 
-                                      placeholder="Rédigez votre lettre de motivation en expliquant pourquoi vous êtes intéressé par ce stage et ce que vous pouvez apporter à l'entreprise...">{{ old('lettre_motivation') }}</textarea>
+                            <input type="file"
+                                   class="form-control @error('lettre_motivation') is-invalid @enderror"
+                                   id="lettre_motivation"
+                                   name="lettre_motivation"
+                                   accept=".pdf,.doc,.docx"
+                                   required
+                                   autofocus>
                         </div>
                         @error('lettre_motivation')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
                         @enderror
-                        <small class="text-muted">Minimum 200 caractères</small>
+                        <small class="text-muted">Formats PDF, DOC ou DOCX, taille max: 5MB</small>
                     </div>
 
                     <div class="mb-3">
@@ -163,10 +163,6 @@
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('offres.show', $offre) }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>
-                            Annuler
-                        </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-paper-plane me-2"></i>
                             Envoyer la candidature
@@ -180,53 +176,47 @@
 
 @push('scripts')
 <script>
-// Validation de la lettre de motivation
-document.getElementById('lettre_motivation').addEventListener('input', function() {
-    const minLength = 200;
-    const currentLength = this.value.length;
-    const remaining = minLength - currentLength;
-    
-    if (remaining > 0) {
-        this.classList.add('is-invalid');
-        this.setCustomValidity(`Il reste ${remaining} caractères à saisir (minimum ${minLength})`);
-    } else {
-        this.classList.remove('is-invalid');
-        this.setCustomValidity('');
-    }
-});
-
 // Validation des fichiers
-document.getElementById('cv_path').addEventListener('change', function() {
-    const file = this.files[0];
-    if (file) {
-        if (file.type !== 'application/pdf') {
-            this.classList.add('is-invalid');
-            this.setCustomValidity('Seuls les fichiers PDF sont acceptés');
-        } else if (file.size > 5 * 1024 * 1024) { // 5MB
-            this.classList.add('is-invalid');
-            this.setCustomValidity('Le fichier ne doit pas dépasser 5MB');
-        } else {
-            this.classList.remove('is-invalid');
-            this.setCustomValidity('');
-        }
+const maxFileSize = 5 * 1024 * 1024;
+
+const fileInputs = {
+    lettre_motivation: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    cv_path: ['application/pdf'],
+    lettre_recommandation: ['application/pdf'],
+};
+
+Object.entries(fileInputs).forEach(([id, allowedTypes]) => {
+    const input = document.getElementById(id);
+
+    if (!input) {
+        return;
     }
+
+    input.addEventListener('change', function() {
+        validateFile(this, allowedTypes);
+    });
 });
 
-document.getElementById('lettre_recommandation').addEventListener('change', function() {
-    const file = this.files[0];
-    if (file) {
-        if (file.type !== 'application/pdf') {
-            this.classList.add('is-invalid');
-            this.setCustomValidity('Seuls les fichiers PDF sont acceptés');
-        } else if (file.size > 5 * 1024 * 1024) { // 5MB
-            this.classList.add('is-invalid');
-            this.setCustomValidity('Le fichier ne doit pas dépasser 5MB');
-        } else {
-            this.classList.remove('is-invalid');
-            this.setCustomValidity('');
-        }
+function validateFile(input, allowedTypes) {
+    const file = input.files[0];
+
+    if (!file) {
+        input.classList.remove('is-invalid');
+        input.setCustomValidity('');
+        return;
     }
-});
+
+    if (!allowedTypes.includes(file.type)) {
+        input.classList.add('is-invalid');
+        input.setCustomValidity('Format de fichier non autorisé');
+    } else if (file.size > maxFileSize) {
+        input.classList.add('is-invalid');
+        input.setCustomValidity('Le fichier ne doit pas dépasser 5MB');
+    } else {
+        input.classList.remove('is-invalid');
+        input.setCustomValidity('');
+    }
+}
 </script>
 @endpush
 @endsection

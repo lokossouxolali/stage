@@ -1,403 +1,260 @@
 @extends('layouts.app')
 
-@section('title', 'Gestion des Utilisateurs')
-@section('page-title', 'Gestion des Utilisateurs')
+@section('title', 'Utilisateurs')
+@section('page-title', 'Gestion des utilisateurs')
 
 @section('content')
-<div class="row mb-3">
-    <div class="col-md-6">
-        <h6 class="mb-0 text-muted fw-normal">
-            <i class="fas fa-users me-2"></i>
-            Liste des Utilisateurs
-        </h6>
+@php
+    $roleBadges = [
+        'super_admin' => ['label' => 'Super Administrateur', 'class' => 'badge-soft-danger'],
+        'responsable_pedagogique' => ['label' => 'Responsable Pedagogique', 'class' => 'badge-soft-warning'],
+        'admin' => ['label' => 'Responsable Pedagogique', 'class' => 'badge-soft-warning'],
+        'etudiant' => ['label' => 'Etudiant', 'class' => 'badge-soft-primary'],
+        'entreprise' => ['label' => 'Entreprise', 'class' => 'badge-soft-info'],
+        'enseignant' => ['label' => 'Enseignant', 'class' => 'badge-soft-secondary'],
+        'responsable_stages' => ['label' => 'Responsable', 'class' => 'badge-soft-secondary'],
+    ];
+@endphp
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card"><div class="card-body"><div class="metric-label">Total</div><div class="metric-value mt-2">{{ $summary['total'] }}</div></div></div>
     </div>
-    <div class="col-md-6 text-end">
-        <a href="{{ route('users.create') }}" class="btn btn-sm" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
-            <i class="fas fa-plus me-1"></i>
-            Nouvel Utilisateur
-        </a>
-        <button type="button" class="btn btn-sm" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;" data-bs-toggle="modal" data-bs-target="#exportModal">
-            <i class="fas fa-download me-1"></i>
-            Exporter
-        </button>
+    <div class="col-md-3">
+        <div class="card metric-card"><div class="card-body"><div class="metric-label">Actifs</div><div class="metric-value mt-2">{{ $summary['active'] }}</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card"><div class="card-body"><div class="metric-label">En attente</div><div class="metric-value mt-2">{{ $summary['pending'] }}</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card"><div class="card-body"><div class="metric-label">Resp. pedagogiques</div><div class="metric-value mt-2">{{ $summary['admins'] }}</div></div></div>
     </div>
 </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-3">
-        @if($users->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Nom</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Email</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Rôle</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Inscription</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Statut</th>
-                            <th class="border-0 py-2" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Créé le</th>
-                            <th class="border-0 py-2 text-center" style="font-size: 0.65rem; font-weight: 600; color: #2d3748;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($users as $user)
-                            <tr class="border-bottom">
-                                <td class="py-2">
-                                    <div class="d-flex align-items-center">
-                                        @if($user->photo_path && $user->photo_url)
-                                            <img src="{{ $user->photo_url }}" alt="{{ $user->name }}" 
-                                                 class="rounded-circle me-2" 
-                                                 style="width: 32px; height: 32px; object-fit: cover;"
-                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                            <div class="user-avatar me-2" style="display: none;">
-                                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                                            </div>
-                                        @else
-                                            <div class="user-avatar me-2">
-                                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                                            </div>
-                                        @endif
-                                        <span class="fw-medium" style="font-size: 0.8rem;">{{ $user->name }}</span>
-                                    </div>
-                                </td>
-                                <td class="py-2">
-                                    <span style="font-size: 0.75rem; color: #6c757d;">{{ $user->email }}</span>
-                                </td>
-                                <td class="py-2">
-                                    @switch($user->role)
-                                        @case('admin')
-                                            <span class="role-badge role-admin">ADMIN</span>
-                                            @break
-                                        @case('etudiant')
-                                            <span class="role-badge role-etudiant">ÉTUDIANT</span>
-                                            @break
-                                        @case('entreprise')
-                                            <span class="role-badge role-entreprise">ENTREPRISE</span>
-                                            @break
-                                        @case('enseignant')
-                                            <span class="role-badge role-enseignant">ENSEIGNANT</span>
-                                            @break
-                                        @case('responsable_stages')
-                                            <span class="role-badge role-responsable">RESPONSABLE</span>
-                                            @break
-                                        @default
-                                            <span class="role-badge role-default">{{ strtoupper($user->role) }}</span>
-                                    @endswitch
-                                </td>
-                                <td class="py-2">
-                                    @switch($user->statut_inscription ?? 'valide')
-                                        @case('en_attente')
-                                            <span class="status-badge status-warning">EN ATTENTE</span>
-                                            @break
-                                        @case('valide')
-                                            <span class="status-badge status-success">VALIDÉ</span>
-                                            @break
-                                        @case('refuse')
-                                            <span class="status-badge status-danger">REFUSÉ</span>
-                                            @break
-                                        @default
-                                            <span class="status-badge status-success">VALIDÉ</span>
-                                    @endswitch
-                                </td>
-                                <td class="py-2">
-                                    @if($user->est_actif)
-                                        <span class="status-badge status-active">ACTIF</span>
-                                    @else
-                                        <span class="status-badge status-inactive">INACTIF</span>
-                                    @endif
-                                </td>
-                                <td class="py-2">
-                                    <span style="font-size: 0.75rem; color: #6c757d;">{{ $user->created_at->format('d/m/Y') }}</span>
-                                </td>
-                                <td class="py-2">
-                                    <div class="d-flex justify-content-center gap-1">
-                                        <a href="{{ route('users.show', $user) }}" class="btn-action btn-view" title="Voir">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        @if(($user->statut_inscription ?? 'valide') === 'en_attente')
-                                            <form method="POST" action="{{ route('users.valider-inscription', $user) }}" class="d-inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="btn-action btn-success" title="Valider l'inscription">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('users.refuser-inscription', $user) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir refuser cette inscription ?')">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="btn-action btn-danger" title="Refuser l'inscription">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-                                        <form method="POST" action="{{ route('users.destroy', $user) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn-action btn-delete" title="Supprimer">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="d-flex justify-content-center mt-3">
-                <div style="font-size: 0.75rem;">
-                    {{ $users->links('pagination::bootstrap-5') }}
+@if(auth()->user()->isSuperAdmin())
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-user-shield me-2 text-primary"></i>Gestion des roles
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="metric-label">Super Administrateurs</div>
+                    <div class="metric-value mt-2">{{ $summary['super_admins'] }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-label">Responsables pedagogiques</div>
+                    <div class="metric-value mt-2">{{ $summary['admins'] }}</div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end justify-content-md-end">
+                    <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-user-plus me-2"></i>Creer un compte
+                    </a>
                 </div>
             </div>
-        @else
-            <div class="text-center py-5">
-                <i class="fas fa-users fa-2x text-muted mb-3" style="opacity: 0.5;"></i>
-                <h6 class="text-muted mb-2" style="font-size: 0.85rem;">Aucun utilisateur trouvé</h6>
-                <p class="text-muted mb-3" style="font-size: 0.75rem;">Commencez par créer votre premier utilisateur.</p>
-                <a href="{{ route('users.create') }}" class="btn btn-sm" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
-                    <i class="fas fa-plus me-1"></i>
-                    Créer un utilisateur
-                </a>
+        </div>
+    </div>
+@endif
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ route('users.index') }}" class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label for="search" class="form-label">Recherche</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="search" class="form-control" id="search" name="search" value="{{ request('search') }}" placeholder="Nom, email ou telephone">
+                </div>
             </div>
-        @endif
+            <div class="col-lg-2 col-md-4">
+                <label for="role" class="form-label">Role</label>
+                <select class="form-select" id="role" name="role">
+                    <option value="">Tous</option>
+                    @foreach($roleLabels as $value => $label)
+                        <option value="{{ $value }}" @selected(request('role') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <label for="statut_inscription" class="form-label">Inscription</label>
+                <select class="form-select" id="statut_inscription" name="statut_inscription">
+                    <option value="">Tous</option>
+                    <option value="valide" @selected(request('statut_inscription') === 'valide')>Validee</option>
+                    <option value="en_attente" @selected(request('statut_inscription') === 'en_attente')>En attente</option>
+                    <option value="refuse" @selected(request('statut_inscription') === 'refuse')>Refusee</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <label for="activity" class="form-label">Statut</label>
+                <select class="form-select" id="activity" name="activity">
+                    <option value="">Tous</option>
+                    <option value="active" @selected(request('activity') === 'active')>Actif</option>
+                    <option value="inactive" @selected(request('activity') === 'inactive')>Inactif</option>
+                </select>
+            </div>
+            <div class="col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill"><i class="fas fa-filter me-2"></i>Filtrer</button>
+                <a href="{{ route('users.index') }}" class="btn btn-outline-secondary" title="Reinitialiser"><i class="fas fa-rotate-left"></i></a>
+            </div>
+        </form>
     </div>
 </div>
-@endsection
 
-@push('styles')
-<style>
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 600;
-        flex-shrink: 0;
-    }
+<div class="card">
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span><i class="fas fa-users me-2 text-primary"></i>Annuaire des utilisateurs</span>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exportModal">
+                <i class="fas fa-download me-2"></i>Exporter
+            </button>
+            <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-2"></i>Nouvel utilisateur
+            </a>
+        </div>
+    </div>
 
-    .role-badge {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.65rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    }
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Contact</th>
+                    <th>Role</th>
+                    <th>Inscription</th>
+                    <th>Statut</th>
+                    <th>Creation</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($users as $user)
+                    @php
+                        $role = $roleBadges[$user->role] ?? ['label' => $user->roleLabel(), 'class' => 'badge-soft-secondary'];
+                        $registrationClass = match($user->statut_inscription ?? 'valide') {
+                            'en_attente' => 'badge-soft-warning',
+                            'refuse' => 'badge-soft-danger',
+                            default => 'badge-soft-success',
+                        };
+                    @endphp
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                @if($user->photo_path && $user->photo_url)
+                                    <img src="{{ $user->photo_url }}" alt="{{ $user->name }}" class="avatar avatar-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                                    <span class="avatar avatar-sm avatar-fallback" style="display: none;">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                @else
+                                    <span class="avatar avatar-sm avatar-fallback">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                @endif
+                                <div>
+                                    <div class="fw-semibold">{{ $user->name }}</div>
+                                    <div class="text-muted small">#{{ $user->id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>{{ $user->email }}</div>
+                            <div class="text-muted small">{{ $user->telephone ?: 'Telephone non renseigne' }}</div>
+                        </td>
+                        <td><span class="badge-soft {{ $role['class'] }}">{{ $role['label'] }}</span></td>
+                        <td><span class="badge-soft {{ $registrationClass }}">{{ str_replace('_', ' ', ucfirst($user->statut_inscription ?? 'valide')) }}</span></td>
+                        <td>
+                            @if($user->est_actif)
+                                <span class="badge-soft badge-soft-success">Actif</span>
+                            @else
+                                <span class="badge-soft badge-soft-secondary">Inactif</span>
+                            @endif
+                        </td>
+                        <td>{{ $user->created_at->format('d/m/Y') }}</td>
+                        <td>
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="{{ route('users.show', $user) }}" class="action-button" title="Voir"><i class="fas fa-eye"></i></a>
+                                @if(!$user->isSuperAdmin() || auth()->user()->isSuperAdmin())
+                                    <a href="{{ route('users.edit', $user) }}" class="action-button" title="Modifier"><i class="fas fa-pen"></i></a>
+                                @endif
+                                @if(($user->statut_inscription ?? 'valide') === 'en_attente')
+                                    <form method="POST" action="{{ route('users.valider-inscription', $user) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="action-button" title="Valider"><i class="fas fa-check"></i></button>
+                                    </form>
+                                    <form method="POST" action="{{ route('users.refuser-inscription', $user) }}" data-confirm="Refuser cette inscription ?">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="action-button" title="Refuser"><i class="fas fa-times"></i></button>
+                                    </form>
+                                @endif
+                                @if(auth()->id() !== $user->id && (!$user->isSuperAdmin() || auth()->user()->isSuperAdmin()))
+                                    <form method="POST" action="{{ route('users.destroy', $user) }}" data-confirm="Supprimer definitivement cet utilisateur ?">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="action-button" title="Supprimer"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                            <div class="fw-semibold">Aucun utilisateur trouve</div>
+                            <div class="text-muted">Modifiez vos filtres ou creez un nouvel utilisateur.</div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
-    .role-admin {
-        background-color: #fee2e2;
-        color: #dc2626;
-    }
+    @if($users->hasPages())
+        <div class="card-footer d-flex justify-content-end">
+            {{ $users->links('pagination::bootstrap-5') }}
+        </div>
+    @endif
+</div>
 
-    .role-etudiant {
-        background-color: #1f2937;
-        color: #ffffff;
-    }
-
-    .role-entreprise {
-        background-color: #d1fae5;
-        color: #059669;
-    }
-
-    .role-enseignant {
-        background-color: #fed7aa;
-        color: #ea580c;
-    }
-
-    .role-responsable {
-        background-color: #e5e7eb;
-        color: #374151;
-    }
-
-    .role-default {
-        background-color: #f3f4f6;
-        color: #6b7280;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.65rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    }
-
-    .status-success {
-        background-color: #d1fae5;
-        color: #059669;
-    }
-
-    .status-warning {
-        background-color: #fef3c7;
-        color: #d97706;
-    }
-
-    .status-danger {
-        background-color: #fee2e2;
-        color: #dc2626;
-    }
-
-    .status-active {
-        background-color: #d1fae5;
-        color: #059669;
-    }
-
-    .status-inactive {
-        background-color: #f3f4f6;
-        color: #6b7280;
-    }
-
-    .btn-action {
-        width: 28px;
-        height: 28px;
-        border: none;
-        border-radius: 0.25rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        padding: 0;
-    }
-
-    .btn-view {
-        background-color: transparent;
-        color: #2d3748;
-        border: 1px solid #2d3748;
-    }
-
-    .btn-view:hover {
-        background-color: #2d3748;
-        color: #ffffff;
-    }
-
-
-    .btn-success {
-        background-color: transparent;
-        color: #2d3748;
-        border: 1px solid #2d3748;
-    }
-
-    .btn-success:hover {
-        background-color: #2d3748;
-        color: #ffffff;
-    }
-
-    .btn-danger, .btn-delete {
-        background-color: transparent;
-        color: #2d3748;
-        border: 1px solid #2d3748;
-    }
-
-    .btn-danger:hover, .btn-delete:hover {
-        background-color: #2d3748;
-        color: #ffffff;
-    }
-    
-    .btn-action i {
-        color: #2d3748;
-    }
-    
-    .btn-action:hover i {
-        color: #ffffff;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: #f9fafb;
-    }
-
-    .card {
-        border: 1px solid #e5e7eb;
-    }
-
-    .table th {
-        border-top: none;
-        font-weight: 600;
-    }
-
-    .table td {
-        vertical-align: middle;
-    }
-
-    /* Pagination personnalisée */
-    .pagination {
-        font-size: 0.75rem;
-    }
-
-    .pagination .page-link {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-    }
-    
-    /* Styles pour les boutons Nouvel Utilisateur et Exporter */
-    .btn[style*="background-color: #2d3748"]:hover {
-        background-color: #374151 !important;
-        border-color: #374151 !important;
-        color: #ffffff !important;
-    }
-</style>
-
-<!-- Modal d'export -->
 <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header" style="background-color: #2d3748; color: #ffffff;">
-                <h5 class="modal-title" id="exportModalLabel">
-                    <i class="fas fa-download me-2"></i>Exporter les utilisateurs
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ route('users.export') }}" id="exportForm">
+            <form method="POST" action="{{ route('users.export') }}">
                 @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exportModalLabel"><i class="fas fa-download me-2 text-primary"></i>Exporter les utilisateurs</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="export_format" class="form-label small fw-bold" style="color: #2d3748;">Format d'export *</label>
+                        <label for="export_format" class="form-label">Format</label>
                         <select class="form-select" id="export_format" name="format" required>
-                            <option value="">Sélectionnez un format</option>
+                            <option value="">Selectionner</option>
                             <option value="excel">Excel (.xlsx)</option>
                             <option value="pdf">PDF (.pdf)</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="export_role" class="form-label small fw-bold" style="color: #2d3748;">Type d'utilisateur</label>
+                        <label for="export_role" class="form-label">Role</label>
                         <select class="form-select" id="export_role" name="role">
-                            <option value="">Tous les utilisateurs</option>
-                            <option value="admin">Administrateur</option>
-                            <option value="etudiant">Étudiant</option>
-                            <option value="enseignant">Enseignant</option>
-                            <option value="entreprise">Entreprise</option>
-                            <option value="responsable_stages">Responsable Stages</option>
+                            <option value="">Tous</option>
+                            @foreach($roleLabels as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="export_statut" class="form-label small fw-bold" style="color: #2d3748;">Statut d'inscription</label>
+                        <label for="export_statut" class="form-label">Inscription</label>
                         <select class="form-select" id="export_statut" name="statut_inscription">
-                            <option value="">Tous les statuts</option>
-                            <option value="valide">Validé</option>
+                            <option value="">Tous</option>
+                            <option value="valide">Validee</option>
                             <option value="en_attente">En attente</option>
-                            <option value="refuse">Refusé</option>
+                            <option value="refuse">Refusee</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-sm" style="background-color: #6c757d; border-color: #6c757d; color: #ffffff;" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-sm" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
-                        <i class="fas fa-download me-1"></i>Exporter
-                    </button>
+                    <button type="submit" class="btn btn-primary" data-loading-text="Export..."><i class="fas fa-download me-2"></i>Exporter</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-@endpush
+@endsection

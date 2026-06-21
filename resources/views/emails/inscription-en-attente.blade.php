@@ -41,7 +41,7 @@
         
         <p>Nous avons bien reçu votre demande d'inscription sur la plateforme de gestion de stages.</p>
         
-        <p>Votre inscription est actuellement <strong>en attente de validation</strong> par un administrateur. Vous recevrez un email de confirmation une fois que votre compte aura été validé.</p>
+        <p>Votre inscription est actuellement <strong>en attente de validation</strong> par un responsable pedagogique. Vous recevrez un email de confirmation une fois que votre compte aura été validé.</p>
         
         <p><strong>Informations de votre inscription :</strong></p>
         <ul>
@@ -66,7 +66,7 @@
         
         <p><strong>Prochaines étapes :</strong></p>
         <ol>
-            <li>Un administrateur va examiner votre demande d'inscription</li>
+            <li>Un responsable pedagogique va examiner votre demande d'inscription</li>
             <li>Vous recevrez un email de confirmation une fois votre compte validé</li>
             <li>Vous pourrez alors vous connecter à la plateforme</li>
         </ol>
@@ -82,4 +82,3 @@
     </div>
 </body>
 </html>
-

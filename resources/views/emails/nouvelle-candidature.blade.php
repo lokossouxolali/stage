@@ -14,14 +14,14 @@
             padding: 20px;
         }
         .header {
-            background-color: #2d3748;
+            background-color: #0b1f4d;
             color: white;
             padding: 20px;
             text-align: center;
             border-radius: 5px 5px 0 0;
         }
         .content {
-            background-color: #f7fafc;
+            background-color: #ffffff;
             padding: 30px;
             border: 1px solid #e2e8f0;
         }
@@ -44,7 +44,7 @@
         .footer {
             text-align: center;
             padding: 20px;
-            color: #718096;
+            color: #31527f;
             font-size: 12px;
         }
     </style>

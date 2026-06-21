@@ -14,6 +14,31 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 
+    public const ROLE_SUPER_ADMIN = 'super_admin';
+    public const ROLE_ADMIN = 'responsable_pedagogique';
+    public const ROLE_LEGACY_ADMIN = 'admin';
+    public const ROLE_ETUDIANT = 'etudiant';
+    public const ROLE_ENTREPRISE = 'entreprise';
+    public const ROLE_ENSEIGNANT = 'enseignant';
+    public const ROLE_RESPONSABLE_STAGES = 'responsable_stages';
+
+    public const ROLE_LABELS = [
+        self::ROLE_SUPER_ADMIN => 'Super Administrateur',
+        self::ROLE_ADMIN => 'Responsable Pedagogique',
+        self::ROLE_LEGACY_ADMIN => 'Responsable Pedagogique',
+        self::ROLE_ETUDIANT => 'Etudiant',
+        self::ROLE_ENTREPRISE => 'Entreprise',
+        self::ROLE_ENSEIGNANT => 'Enseignant',
+        self::ROLE_RESPONSABLE_STAGES => 'Responsable stages',
+    ];
+
+    public const MANAGED_ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_ETUDIANT,
+        self::ROLE_ENTREPRISE,
+        self::ROLE_ENSEIGNANT,
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -68,11 +93,12 @@ class User extends Authenticatable
      */
     public function getPhotoUrlAttribute()
     {
-        if ($this->photo_path) {
-            // Utiliser asset() pour générer l'URL relative au domaine
-            // Le lien symbolique public/storage pointe vers storage/app/public
-            return asset('storage/' . $this->photo_path);
+        if ($this->photo_path && Storage::disk('public')->exists($this->photo_path)) {
+            $version = $this->updated_at ? $this->updated_at->timestamp : time();
+
+            return route('users.photo', ['user' => $this->id, 'v' => $version]);
         }
+
         return null;
     }
 
@@ -119,23 +145,48 @@ class User extends Authenticatable
     }
 
     // Méthodes utilitaires
+    public static function roleLabels(): array
+    {
+        return self::ROLE_LABELS;
+    }
+
+    public static function administrativeRoles(): array
+    {
+        return [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN, self::ROLE_LEGACY_ADMIN];
+    }
+
+    public function roleLabel(): string
+    {
+        return self::ROLE_LABELS[$this->role] ?? ucfirst(str_replace('_', ' ', $this->role));
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
     public function isAdmin()
     {
-        return $this->role === 'admin';
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_LEGACY_ADMIN], true) || $this->isSuperAdmin();
+    }
+
+    public function isResponsablePedagogique()
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_LEGACY_ADMIN], true);
     }
 
     public function isEtudiant()
     {
-        return $this->role === 'etudiant';
+        return $this->role === self::ROLE_ETUDIANT;
     }
 
     public function isEntreprise()
     {
-        return $this->role === 'entreprise';
+        return $this->role === self::ROLE_ENTREPRISE;
     }
 
     public function isEnseignant()
     {
-        return $this->role === 'enseignant';
+        return $this->role === self::ROLE_ENSEIGNANT;
     }
 }

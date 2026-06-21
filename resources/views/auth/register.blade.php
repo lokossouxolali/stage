@@ -4,426 +4,205 @@
 @section('page-title', 'Inscription')
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body p-3">
-                <div class="mb-3">
-                    <h4 class="card-title mb-1">Créer un compte</h4>
-                    <p class="text-muted small mb-0">Rejoignez notre plateforme de gestion de stages</p>
-                </div>
-
-                <form method="POST" action="{{ route('register') }}" id="registerForm">
-                    @csrf
-                    
-                    <!-- Sélection du type de compte en premier -->
-                    <div class="mb-2">
-                        <label for="role" class="form-label small fw-bold">Type de compte *</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">
-                                <i class="fas fa-user-tag"></i>
-                            </span>
-                            <select class="form-select form-select-sm @error('role') is-invalid @enderror" 
-                                    id="role" 
-                                    name="role" 
-                                    required>
-                                <option value="">Sélectionnez votre rôle</option>
-                                <option value="etudiant" {{ old('role') == 'etudiant' ? 'selected' : '' }}>Étudiant</option>
-                                <option value="entreprise" {{ old('role') == 'entreprise' ? 'selected' : '' }}>Entreprise</option>
-                                <option value="enseignant" {{ old('role') == 'enseignant' ? 'selected' : '' }}>Enseignant</option>
-                            </select>
-                        </div>
-                        @error('role')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <!-- Champs communs (masqués jusqu'à sélection du rôle) -->
-                    <div id="common-fields" style="display: none;">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-2">
-                                    <label for="name" class="form-label small">Nom complet *</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-user"></i>
-                                        </span>
-                                        <input type="text" 
-                                               class="form-control form-control-sm @error('name') is-invalid @enderror" 
-                                               id="name" 
-                                               name="name" 
-                                               value="{{ old('name') }}" 
-                                               required 
-                                               autocomplete="name">
-                                    </div>
-                                    @error('name')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="mb-2">
-                                    <label for="email" class="form-label small">Adresse email *</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-envelope"></i>
-                                        </span>
-                                        <input type="email" 
-                                               class="form-control form-control-sm @error('email') is-invalid @enderror" 
-                                               id="email" 
-                                               name="email" 
-                                               value="{{ old('email') }}" 
-                                               required 
-                                               autocomplete="email">
-                                    </div>
-                                    @error('email')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="mb-2">
-                                    <label for="telephone" class="form-label small">Téléphone</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-phone"></i>
-                                        </span>
-                                        <input type="tel" 
-                                               class="form-control form-control-sm @error('telephone') is-invalid @enderror" 
-                                               id="telephone" 
-                                               name="telephone" 
-                                               value="{{ old('telephone') }}" 
-                                               autocomplete="tel">
-                                    </div>
-                                    @error('telephone')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Date de naissance (uniquement pour étudiants) -->
-                        <div id="date_naissance_field" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-2">
-                                        <label for="date_naissance" class="form-label small">Date de naissance</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-calendar"></i>
-                                            </span>
-                                            <input type="date" 
-                                                   class="form-control form-control-sm @error('date_naissance') is-invalid @enderror" 
-                                                   id="date_naissance" 
-                                                   name="date_naissance" 
-                                                   value="{{ old('date_naissance') }}">
-                                        </div>
-                                        @error('date_naissance')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Champs spécifiques Étudiant -->
-                        <div id="etudiant-fields" style="display: none;">
-                            <hr class="my-2">
-                            <h6 class="mb-2 small fw-bold"><i class="fas fa-graduation-cap me-1"></i>Informations étudiant</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-2">
-                                        <label for="niveau_etude" class="form-label small">Niveau d'étude *</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-graduation-cap"></i>
-                                            </span>
-                                            <select class="form-select form-select-sm @error('niveau_etude') is-invalid @enderror" 
-                                                    id="niveau_etude" 
-                                                    name="niveau_etude">
-                                                <option value="">Sélectionnez le niveau</option>
-                                                <option value="L1" {{ old('niveau_etude') == 'L1' ? 'selected' : '' }}>L1</option>
-                                                <option value="L2" {{ old('niveau_etude') == 'L2' ? 'selected' : '' }}>L2</option>
-                                                <option value="L3" {{ old('niveau_etude') == 'L3' ? 'selected' : '' }}>L3</option>
-                                                <option value="M1" {{ old('niveau_etude') == 'M1' ? 'selected' : '' }}>M1</option>
-                                                <option value="M2" {{ old('niveau_etude') == 'M2' ? 'selected' : '' }}>M2</option>
-                                            </select>
-                                        </div>
-                                        @error('niveau_etude')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-4">
-                                    <div class="mb-2">
-                                        <label for="filiere" class="form-label small">Filière *</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-book"></i>
-                                            </span>
-                                            <input type="text" 
-                                                   class="form-control form-control-sm @error('filiere') is-invalid @enderror" 
-                                                   id="filiere" 
-                                                   name="filiere" 
-                                                   value="{{ old('filiere') }}" 
-                                                   placeholder="Ex: Informatique, Gestion, etc.">
-                                        </div>
-                                        @error('filiere')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Champs spécifiques Enseignant -->
-                        <div id="enseignant-fields" style="display: none;">
-                            <hr class="my-2">
-                            <h6 class="mb-2 small fw-bold"><i class="fas fa-chalkboard-teacher me-1"></i>Informations enseignant</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-2">
-                                        <label for="specialite" class="form-label small">Spécialité / Département</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-briefcase"></i>
-                                            </span>
-                                            <input type="text" 
-                                                   class="form-control form-control-sm @error('specialite') is-invalid @enderror" 
-                                                   id="specialite" 
-                                                   name="specialite" 
-                                                   value="{{ old('specialite') }}" 
-                                                   placeholder="Ex: Informatique, Mathématiques, etc.">
-                                        </div>
-                                        @error('specialite')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Champs spécifiques Entreprise -->
-                        <div id="entreprise-fields" style="display: none;">
-                            <hr class="my-2">
-                            <h6 class="mb-2 small fw-bold"><i class="fas fa-building me-1"></i>Informations entreprise</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-2">
-                                        <label for="nom_entreprise" class="form-label small">Nom de l'entreprise *</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-building"></i>
-                                            </span>
-                                            <input type="text" 
-                                                   class="form-control form-control-sm @error('nom_entreprise') is-invalid @enderror" 
-                                                   id="nom_entreprise" 
-                                                   name="nom_entreprise" 
-                                                   value="{{ old('nom_entreprise') }}" 
-                                                   placeholder="Nom de votre entreprise">
-                                        </div>
-                                        @error('nom_entreprise')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-2">
-                                        <label for="secteur_activite" class="form-label small">Secteur d'activité</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-industry"></i>
-                                            </span>
-                                            <input type="text" 
-                                                   class="form-control form-control-sm @error('secteur_activite') is-invalid @enderror" 
-                                                   id="secteur_activite" 
-                                                   name="secteur_activite" 
-                                                   value="{{ old('secteur_activite') }}" 
-                                                   placeholder="Ex: Informatique, Commerce, etc.">
-                                        </div>
-                                        @error('secteur_activite')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-2">
-                                        <label for="adresse_entreprise" class="form-label small">Adresse</label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-map-marker-alt"></i>
-                                            </span>
-                                            <input type="text" 
-                                                   class="form-control form-control-sm @error('adresse_entreprise') is-invalid @enderror" 
-                                                   id="adresse_entreprise" 
-                                                   name="adresse_entreprise" 
-                                                   value="{{ old('adresse_entreprise') }}" 
-                                                   placeholder="Adresse de l'entreprise">
-                                        </div>
-                                        @error('adresse_entreprise')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Mot de passe -->
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-2">
-                                    <label for="password" class="form-label small">Mot de passe *</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
-                                        <input type="password" 
-                                               class="form-control form-control-sm @error('password') is-invalid @enderror" 
-                                               id="password" 
-                                               name="password" 
-                                               required 
-                                               autocomplete="new-password">
-                                    </div>
-                                    @error('password')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="mb-2">
-                                    <label for="password_confirmation" class="form-label small">Confirmer le mot de passe *</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
-                                        <input type="password" 
-                                               class="form-control form-control-sm" 
-                                               id="password_confirmation" 
-                                               name="password_confirmation" 
-                                               required 
-                                               autocomplete="new-password">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-grid mt-2">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="fas fa-user-plus me-1"></i>
-                                Créer mon compte
-                            </button>
-                        </div>
-                    </div>
-                </form>
-
-                <div class="text-center mt-2">
-                    <p class="mb-0 small">
-                        Déjà un compte ? 
-                        <a href="{{ route('login') }}" class="text-decoration-none" style="color: #2d3748;">
-                            Se connecter
-                        </a>
-                    </p>
-                </div>
+<div class="auth-wide">
+    <div class="card auth-register-card">
+        <div class="card-body p-4 p-lg-5">
+            <div class="mb-4">
+                <h1 class="h4 fw-bold mb-1">Creer un compte</h1>
+                <p class="text-muted mb-0">Selectionnez votre profil, renseignez votre token, puis confirmez votre email par OTP.</p>
             </div>
+
+            <form method="POST" action="{{ route('register') }}" id="registerForm">
+                @csrf
+
+                <div class="account-type-grid mb-4">
+                    <label class="account-type-option">
+                        <input type="radio" name="role" value="etudiant" @checked(old('role') === 'etudiant') required>
+                        <span><i class="fas fa-graduation-cap"></i></span>
+                        <strong>Etudiant</strong>
+                    </label>
+                    <label class="account-type-option">
+                        <input type="radio" name="role" value="entreprise" @checked(old('role') === 'entreprise') required>
+                        <span><i class="fas fa-building"></i></span>
+                        <strong>Entreprise</strong>
+                    </label>
+                    <label class="account-type-option">
+                        <input type="radio" name="role" value="enseignant" @checked(old('role') === 'enseignant') required>
+                        <span><i class="fas fa-chalkboard-teacher"></i></span>
+                        <strong>Enseignant</strong>
+                    </label>
+                </div>
+                @error('role')
+                    <div class="text-danger small mb-3">{{ $message }}</div>
+                @enderror
+
+                <div id="registration-fields" class="registration-fields">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="registration_token" class="form-label">Token d'inscription *</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-ticket-alt"></i></span>
+                                <input type="text" class="form-control @error('registration_token') is-invalid @enderror" id="registration_token" name="registration_token" value="{{ old('registration_token') }}" required>
+                            </div>
+                            @error('registration_token')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Nom complet *</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required autocomplete="name">
+                            </div>
+                            @error('name')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Adresse email *</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required autocomplete="email">
+                            </div>
+                            @error('email')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="telephone" class="form-label">Telephone</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                <input type="tel" class="form-control @error('telephone') is-invalid @enderror" id="telephone" name="telephone" value="{{ old('telephone') }}" autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 role-field" data-role-field="etudiant">
+                            <label for="date_naissance" class="form-label">Date de naissance</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <input type="date" class="form-control @error('date_naissance') is-invalid @enderror" id="date_naissance" name="date_naissance" value="{{ old('date_naissance') }}">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 role-field" data-role-field="etudiant">
+                            <label for="niveau_etude" class="form-label">Niveau d'etude *</label>
+                            <select class="form-select @error('niveau_etude') is-invalid @enderror" id="niveau_etude" name="niveau_etude">
+                                <option value="">Selectionner</option>
+                                <option value="L1" @selected(old('niveau_etude') === 'L1')>L1</option>
+                                <option value="L2" @selected(old('niveau_etude') === 'L2')>L2</option>
+                                <option value="L3" @selected(old('niveau_etude') === 'L3')>L3</option>
+                                <option value="M1" @selected(old('niveau_etude') === 'M1')>M1</option>
+                                <option value="M2" @selected(old('niveau_etude') === 'M2')>M2</option>
+                            </select>
+                            @error('niveau_etude')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 role-field" data-role-field="etudiant">
+                            <label for="filiere" class="form-label">Filiere *</label>
+                            <input type="text" class="form-control @error('filiere') is-invalid @enderror" id="filiere" name="filiere" value="{{ old('filiere') }}">
+                            @error('filiere')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 role-field" data-role-field="enseignant">
+                            <label for="specialite" class="form-label">Specialite / Departement</label>
+                            <input type="text" class="form-control @error('specialite') is-invalid @enderror" id="specialite" name="specialite" value="{{ old('specialite') }}">
+                        </div>
+
+                        <div class="col-md-6 role-field" data-role-field="entreprise">
+                            <label for="nom_entreprise" class="form-label">Nom de l'entreprise *</label>
+                            <input type="text" class="form-control @error('nom_entreprise') is-invalid @enderror" id="nom_entreprise" name="nom_entreprise" value="{{ old('nom_entreprise') }}">
+                            @error('nom_entreprise')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 role-field" data-role-field="entreprise">
+                            <label for="secteur_activite" class="form-label">Secteur d'activite</label>
+                            <input type="text" class="form-control @error('secteur_activite') is-invalid @enderror" id="secteur_activite" name="secteur_activite" value="{{ old('secteur_activite') }}">
+                        </div>
+
+                        <div class="col-md-6 role-field" data-role-field="entreprise">
+                            <label for="adresse_entreprise" class="form-label">Adresse</label>
+                            <input type="text" class="form-control @error('adresse_entreprise') is-invalid @enderror" id="adresse_entreprise" name="adresse_entreprise" value="{{ old('adresse_entreprise') }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Mot de passe *</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required autocomplete="new-password">
+                            </div>
+                            @error('password')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="password_confirmation" class="form-label">Confirmer le mot de passe *</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required autocomplete="new-password">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
+                        <a href="{{ route('login') }}" class="text-primary fw-semibold">Se connecter</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-shield-alt me-2"></i>Recevoir le code OTP
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const roleSelect = document.getElementById('role');
-    const commonFields = document.getElementById('common-fields');
-    const etudiantFields = document.getElementById('etudiant-fields');
-    const enseignantFields = document.getElementById('enseignant-fields');
-    const entrepriseFields = document.getElementById('entreprise-fields');
-    
-    // Fonction pour gérer l'affichage des champs selon le rôle
-    function toggleFields() {
-        const selectedRole = roleSelect.value;
-        const dateNaissanceField = document.getElementById('date_naissance_field');
-        
-        if (selectedRole) {
-            // Afficher les champs communs
-            commonFields.style.display = 'block';
-            
-            // Masquer tous les champs spécifiques
-            etudiantFields.style.display = 'none';
-            enseignantFields.style.display = 'none';
-            entrepriseFields.style.display = 'none';
-            
-            // Afficher les champs spécifiques selon le rôle
-            if (selectedRole === 'etudiant') {
-                etudiantFields.style.display = 'block';
-                // Afficher la date de naissance pour les étudiants
-                if (dateNaissanceField) {
-                    dateNaissanceField.style.display = 'block';
-                }
-                // Rendre obligatoires les champs étudiant
-                document.getElementById('niveau_etude').required = true;
-                document.getElementById('filiere').required = true;
-            } else {
-                // Masquer la date de naissance pour les entreprises et enseignants
-                if (dateNaissanceField) {
-                    dateNaissanceField.style.display = 'none';
-                }
-                document.getElementById('niveau_etude').required = false;
-                document.getElementById('filiere').required = false;
-            }
-            
-            if (selectedRole === 'enseignant') {
-                enseignantFields.style.display = 'block';
-            }
-            
-            if (selectedRole === 'entreprise') {
-                entrepriseFields.style.display = 'block';
-                // Rendre obligatoire le nom de l'entreprise
-                document.getElementById('nom_entreprise').required = true;
-            } else {
-                document.getElementById('nom_entreprise').required = false;
-            }
-        } else {
-            // Masquer tous les champs si aucun rôle n'est sélectionné
-            commonFields.style.display = 'none';
-            if (dateNaissanceField) {
-                dateNaissanceField.style.display = 'none';
-            }
-        }
+document.addEventListener('DOMContentLoaded', function () {
+    const roleInputs = document.querySelectorAll('input[name="role"]');
+    const fieldsWrap = document.getElementById('registration-fields');
+    const roleFields = document.querySelectorAll('[data-role-field]');
+    const requiredByRole = {
+        etudiant: ['niveau_etude', 'filiere'],
+        entreprise: ['nom_entreprise'],
+        enseignant: []
+    };
+
+    function selectedRole() {
+        const checked = document.querySelector('input[name="role"]:checked');
+        return checked ? checked.value : '';
     }
-    
-    // Écouter les changements du sélecteur de rôle
-    roleSelect.addEventListener('change', toggleFields);
-    
-    // Initialiser l'affichage au chargement de la page
-    toggleFields();
+
+    function updateFields() {
+        const role = selectedRole();
+        fieldsWrap.classList.toggle('is-visible', Boolean(role));
+
+        roleFields.forEach(field => {
+            field.style.display = field.dataset.roleField === role ? '' : 'none';
+        });
+
+        Object.values(requiredByRole).flat().forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.required = false;
+        });
+
+        (requiredByRole[role] || []).forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.required = true;
+        });
+    }
+
+    roleInputs.forEach(input => input.addEventListener('change', updateFields));
+    updateFields();
 });
 </script>
 @endpush

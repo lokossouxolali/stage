@@ -19,10 +19,6 @@
                             Modifier
                         </a>
                     @endif
-                    <a href="{{ route('candidatures.index') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i>
-                        Retour
-                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -90,6 +86,7 @@
                 </div>
                 
                 <!-- Statut de la candidature -->
+                @if(!auth()->user()->isEntreprise())
                 <div class="row mb-4">
                     <div class="col-12">
                         <h6 class="text-muted mb-3">Statut de la candidature</h6>
@@ -116,19 +113,10 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Lettre de motivation -->
-                <div class="mb-4">
-                    <h6 class="text-muted mb-3">Lettre de motivation</h6>
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <p class="mb-0">{{ $candidature->lettre_motivation }}</p>
-                        </div>
-                    </div>
-                </div>
+                @endif
                 
                 <!-- Documents joints -->
-                @if($candidature->cv_path || $candidature->lettre_recommandation_path || $candidature->portfolio)
+                @if($candidature->cv_path || $candidature->lettre_motivation_path || $candidature->lettre_recommandation_path || $candidature->portfolio)
                     <div class="mb-4">
                         <h6 class="text-muted mb-3">Documents joints</h6>
                         <div class="row">
@@ -136,13 +124,30 @@
                                 <div class="col-md-4 mb-2">
                                     <div class="card border">
                                         <div class="card-body text-center">
-                                            <i class="fas fa-file-pdf fa-2x mb-2" style="color: #2d3748;"></i>
+                                            <i class="fas fa-file-pdf fa-2x mb-2" style="color: #0b1f4d;"></i>
                                             <div class="fw-bold">CV</div>
                                             <a href="{{ route('candidatures.download.cv', $candidature) }}" 
                                                target="_blank" 
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-download me-1"></i>
-                                                Télécharger
+                                                Telecharger
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($candidature->lettre_motivation_path)
+                                <div class="col-md-4 mb-2">
+                                    <div class="card border">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-alt fa-2x mb-2" style="color: #0b1f4d;"></i>
+                                            <div class="fw-bold">Lettre de motivation</div>
+                                            <a href="{{ route('candidatures.download.lettre-motivation', $candidature) }}"
+                                               target="_blank"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download me-1"></i>
+                                                Telecharger
                                             </a>
                                         </div>
                                     </div>
@@ -153,13 +158,13 @@
                                 <div class="col-md-4 mb-2">
                                     <div class="card border">
                                         <div class="card-body text-center">
-                                            <i class="fas fa-file-pdf fa-2x mb-2" style="color: #2d3748;"></i>
+                                            <i class="fas fa-file-pdf fa-2x mb-2" style="color: #0b1f4d;"></i>
                                             <div class="fw-bold">Lettre de recommandation</div>
                                             <a href="{{ route('candidatures.download.lettre', $candidature) }}" 
                                                target="_blank" 
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-download me-1"></i>
-                                                Télécharger
+                                                Telecharger
                                             </a>
                                         </div>
                                     </div>
@@ -170,7 +175,7 @@
                                 <div class="col-md-4 mb-2">
                                     <div class="card border">
                                         <div class="card-body text-center">
-                                            <i class="fas fa-link fa-2x mb-2" style="color: #2d3748;"></i>
+                                            <i class="fas fa-link fa-2x mb-2" style="color: #0b1f4d;"></i>
                                             <div class="fw-bold">Portfolio</div>
                                             <a href="{{ $candidature->portfolio }}" 
                                                target="_blank" 

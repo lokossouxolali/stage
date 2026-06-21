@@ -9,6 +9,7 @@ use App\Http\Controllers\CandidatureController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PropositionThemeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\RegistrationTokenController;
 
 // Route d'accueil
 Route::get('/', function () {
@@ -21,6 +22,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+    Route::get('/register/verify', [AuthController::class, 'showRegisterOtpForm'])->name('register.verify');
+    Route::post('/register/verify', [AuthController::class, 'verifyRegistrationOtp'])->name('register.verify.submit');
+    Route::post('/register/verify/resend', [AuthController::class, 'resendRegistrationOtp'])->name('register.verify.resend');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -68,6 +72,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/users/{user}/valider-inscription', [UserController::class, 'validerInscription'])->name('users.valider-inscription');
         Route::patch('/users/{user}/refuser-inscription', [UserController::class, 'refuserInscription'])->name('users.refuser-inscription');
         Route::post('/users/export', [UserController::class, 'export'])->name('users.export');
+        Route::get('/registration-tokens', [RegistrationTokenController::class, 'index'])->name('registration-tokens.index');
+        Route::post('/registration-tokens', [RegistrationTokenController::class, 'store'])->name('registration-tokens.store');
+        Route::get('/registration-tokens/export', [RegistrationTokenController::class, 'export'])->name('registration-tokens.export');
     });
     
     // Routes spécifiques pour les entreprises
@@ -104,6 +111,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/candidatures/{candidature}/accepter', [CandidatureController::class, 'accepter'])->name('candidatures.accepter');
     Route::patch('/candidatures/{candidature}/refuser', [CandidatureController::class, 'refuser'])->name('candidatures.refuser');
     Route::get('/candidatures/{candidature}/cv', [CandidatureController::class, 'downloadCv'])->name('candidatures.download.cv');
+    Route::get('/candidatures/{candidature}/lettre-motivation', [CandidatureController::class, 'downloadLettreMotivation'])->name('candidatures.download.lettre-motivation');
     Route::get('/candidatures/{candidature}/lettre-recommandation', [CandidatureController::class, 'downloadLettreRecommandation'])->name('candidatures.download.lettre');
     
     // Routes pour les statistiques (admin seulement)
@@ -112,6 +120,7 @@ Route::middleware('auth')->group(function () {
     });
     
     // Routes pour les profils utilisateur
+    Route::get('/profile-photos/{user}', [UserController::class, 'photo'])->name('users.photo');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.show');
     Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
     Route::patch('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
@@ -124,6 +133,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/notifications/read-all', [NotificationController::class, 'marquerToutesLues'])->name('notifications.read-all');
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('/notifications/nombre-non-lues', [NotificationController::class, 'nombreNonLues'])->name('notifications.nombre-non-lues');
+    Route::get('/notifications/derniere-non-lue', [NotificationController::class, 'derniereNonLue'])->name('notifications.derniere-non-lue');
     
     // Routes pour les propositions de thèmes
     Route::middleware('role:etudiant,admin')->group(function () {

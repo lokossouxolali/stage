@@ -233,7 +233,7 @@
     <div class="col-12">
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>
-            <strong>Succès !</strong> Votre interface est maintenant ultra-moderne et réactive.
+            <strong>Succes !</strong> Interface mise a jour.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     </div>

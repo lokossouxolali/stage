@@ -26,26 +26,26 @@
                                                 <img src="{{ $etudiant->photo_url }}" 
                                                      alt="{{ $etudiant->name }}" 
                                                      class="rounded-circle mx-auto d-block"
-                                                     style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                                                     style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #0b1f4d; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                <div class="mx-auto" style="display: none; width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; border: 3px solid #2d3748;">
+                                                <div class="mx-auto" style="display: none; width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #0b1f4d 0%, #123a7a 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; border: 3px solid #0b1f4d;">
                                                     {{ strtoupper(substr($etudiant->name, 0, 1)) }}
                                                 </div>
                                             @else
-                                                <div class="mx-auto" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; border: 3px solid #2d3748;">
+                                                <div class="mx-auto" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #0b1f4d 0%, #123a7a 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; border: 3px solid #0b1f4d;">
                                                     {{ strtoupper(substr($etudiant->name, 0, 1)) }}
                                                 </div>
                                             @endif
                                         </div>
 
                                         <!-- Nom -->
-                                        <h6 class="card-title text-center mb-2 fw-bold" style="color: #2d3748;">
+                                        <h6 class="card-title text-center mb-2 fw-bold" style="color: #0b1f4d;">
                                             {{ $etudiant->name }}
                                         </h6>
 
                                         <!-- Email -->
                                         <p class="text-muted text-center small mb-2">
-                                            <i class="fas fa-envelope me-1" style="color: #2d3748;"></i>
+                                            <i class="fas fa-envelope me-1" style="color: #0b1f4d;"></i>
                                             {{ $etudiant->email }}
                                         </p>
 
@@ -54,13 +54,13 @@
                                             <div class="mb-3">
                                                 @if($etudiant->niveau_etude)
                                                     <p class="text-muted small mb-1">
-                                                        <i class="fas fa-graduation-cap me-1" style="color: #2d3748;"></i>
+                                                        <i class="fas fa-graduation-cap me-1" style="color: #0b1f4d;"></i>
                                                         Niveau : {{ $etudiant->niveau_etude }}
                                                     </p>
                                                 @endif
                                                 @if($etudiant->filiere)
                                                     <p class="text-muted small mb-0">
-                                                        <i class="fas fa-book me-1" style="color: #2d3748;"></i>
+                                                        <i class="fas fa-book me-1" style="color: #0b1f4d;"></i>
                                                         Filière : {{ $etudiant->filiere }}
                                                     </p>
                                                 @endif
@@ -70,7 +70,7 @@
                                         <!-- Téléphone si disponible -->
                                         @if($etudiant->telephone)
                                             <p class="text-muted text-center small mb-3">
-                                                <i class="fas fa-phone me-1" style="color: #2d3748;"></i>
+                                                <i class="fas fa-phone me-1" style="color: #0b1f4d;"></i>
                                                 {{ $etudiant->telephone }}
                                             </p>
                                         @endif
@@ -87,7 +87,7 @@
                                         <div class="d-grid gap-2">
                                             <form method="POST" action="{{ route('demandes-encadrement.accepter', $etudiant) }}" class="d-inline">
                                                 @csrf
-                                                <button type="submit" class="btn btn-sm w-100" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+                                                <button type="submit" class="btn btn-sm w-100" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                                                     <i class="fas fa-check me-2"></i>
                                                     Accepter
                                                 </button>
@@ -106,7 +106,7 @@
                             <div class="modal fade" id="refuserModal{{ $etudiant->id }}" tabindex="-1" aria-labelledby="refuserModalLabel{{ $etudiant->id }}" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
-                                        <div class="modal-header" style="background-color: #2d3748; color: #ffffff;">
+                                        <div class="modal-header" style="background-color: #0b1f4d; color: #ffffff;">
                                             <h5 class="modal-title" id="refuserModalLabel{{ $etudiant->id }}">
                                                 <i class="fas fa-times-circle me-2"></i>Refuser la demande
                                             </h5>
@@ -123,7 +123,6 @@
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                                 <button type="submit" class="btn btn-danger">
                                                     <i class="fas fa-times me-2"></i>Confirmer le refus
                                                 </button>

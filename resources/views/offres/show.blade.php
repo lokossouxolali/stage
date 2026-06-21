@@ -19,10 +19,6 @@
                             Modifier
                         </a>
                     @endif
-                    <a href="{{ route('offres.index') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i>
-                        Retour
-                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -185,11 +181,19 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     @if(auth()->user()->isEtudiant() && $offre->statut === 'active')
-                        <a href="{{ route('candidatures.create', $offre) }}" 
-                           class="btn btn-success">
-                            <i class="fas fa-paper-plane me-2"></i>
-                            Postuler à cette offre
-                        </a>
+                        @if($candidatureExistante)
+                            <a href="{{ route('candidatures.show', $candidatureExistante) }}"
+                               class="btn btn-outline-success">
+                                <i class="fas fa-check me-2"></i>
+                                Candidature déjà envoyée
+                            </a>
+                        @else
+                            <a href="{{ route('candidatures.create', $offre) }}"
+                               class="btn btn-success">
+                                <i class="fas fa-paper-plane me-2"></i>
+                                Postuler à cette offre
+                            </a>
+                        @endif
                     @endif
                     
                     @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())

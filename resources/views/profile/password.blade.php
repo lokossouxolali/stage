@@ -14,6 +14,35 @@
                 </h6>
             </div>
             <div class="card-body p-4">
+                @if(session('password_change_pending') || $errors->has('otp_code'))
+                    <form method="POST" action="{{ route('profile.password.update') }}" class="mb-4">
+                        @csrf
+                        @method('PATCH')
+
+                        <div class="alert alert-info" style="font-size: 0.8rem; padding: 0.75rem;">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Entrez le code OTP recu par email pour appliquer le nouveau mot de passe.
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="otp_code" class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">
+                                Code OTP <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" inputmode="numeric" maxlength="6" class="form-control form-control-sm @error('otp_code') is-invalid @enderror"
+                                   id="otp_code" name="otp_code" required autofocus
+                                   style="font-size: 0.85rem;">
+                            @error('otp_code')
+                                <div class="invalid-feedback" style="font-size: 0.75rem;">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <button type="submit" class="btn btn-dark btn-sm">
+                            <i class="fas fa-check me-1"></i>
+                            Valider le OTP
+                        </button>
+                    </form>
+                @endif
+
                 <form method="POST" action="{{ route('profile.password.update') }}">
                     @csrf
                     @method('PATCH')
@@ -57,10 +86,6 @@
                     </div>
                     
                     <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                        <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-times me-1"></i>
-                            Annuler
-                        </a>
                         <button type="submit" class="btn btn-dark btn-sm">
                             <i class="fas fa-save me-1"></i>
                             Changer le mot de passe
@@ -80,8 +105,8 @@
     }
 
     .btn-dark {
-        background-color: #1f2937;
-        border-color: #1f2937;
+        background-color: #081a3d;
+        border-color: #081a3d;
         color: #ffffff;
     }
 
@@ -93,13 +118,13 @@
 
     .btn-outline-secondary {
         border-color: #d1d5db;
-        color: #6b7280;
+        color: #31527f;
     }
 
     .btn-outline-secondary:hover {
         background-color: #f3f4f6;
         border-color: #d1d5db;
-        color: #374151;
+        color: #123a7a;
     }
 
     .form-control-sm {

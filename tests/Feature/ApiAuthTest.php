@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Mail\OtpCodeMail;
+use App\Models\RegistrationToken;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ApiAuthTest extends TestCase
@@ -35,21 +37,72 @@ class ApiAuthTest extends TestCase
 
     public function test_user_can_register(): void
     {
+        Mail::fake();
+
+        $plainToken = 'ETUDIANT-TEST-TOKEN';
+        RegistrationToken::create([
+            'token_hash' => RegistrationToken::hashToken($plainToken),
+            'role' => 'etudiant',
+        ]);
+
         $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
             'role' => 'etudiant',
+            'registration_token' => $plainToken,
         ]);
 
-        $response->assertStatus(201)
+        $response->assertStatus(202)
                 ->assertJsonStructure([
                     'success',
                     'message',
-                    'user',
-                    'token',
-                    'token_type'
+                    'pending_registration_id'
+                ]);
+
+        $otp = null;
+        Mail::assertSent(OtpCodeMail::class, function ($mail) use (&$otp) {
+            $otp = $mail->code;
+            return true;
+        });
+
+        $verifyResponse = $this->postJson('/api/auth/register/verify', [
+            'pending_registration_id' => $response->json('pending_registration_id'),
+            'otp_code' => $otp,
+        ]);
+
+        $verifyResponse->assertStatus(201)
+                ->assertJsonStructure([
+                    'success',
+                    'message',
+                    'user'
+                ]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'statut_inscription' => 'en_attente',
+            'est_actif' => false,
+        ]);
+    }
+
+    public function test_pending_user_cannot_login(): void
+    {
+        User::factory()->create([
+            'email' => 'pending@example.com',
+            'password' => bcrypt('password'),
+            'statut_inscription' => 'en_attente',
+            'est_actif' => false,
+        ]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'pending@example.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertStatus(403)
+                ->assertJson([
+                    'success' => false,
                 ]);
     }
 

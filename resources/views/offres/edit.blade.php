@@ -115,9 +115,10 @@
                                             name="type_stage" 
                                             required>
                                         <option value="">Sélectionnez le type</option>
-                                        <option value="Obligatoire" {{ old('type_stage', $offre->type_stage) == 'Obligatoire' ? 'selected' : '' }}>Obligatoire</option>
                                         <option value="Perfectionnement" {{ old('type_stage', $offre->type_stage) == 'Perfectionnement' ? 'selected' : '' }}>Perfectionnement</option>
-                                        <option value="Projet_fin_etudes" {{ old('type_stage', $offre->type_stage) == 'Projet_fin_etudes' ? 'selected' : '' }}>Projet fin d'études</option>
+                                        <option value="Professionnel" {{ old('type_stage', $offre->type_stage) == 'Professionnel' ? 'selected' : '' }}>Professionnel</option>
+                                        <option value="Académique" {{ old('type_stage', $offre->type_stage) == 'Académique' ? 'selected' : '' }}>Académique</option>
+                                        <option value="Mémoire" {{ old('type_stage', $offre->type_stage) == 'Mémoire' ? 'selected' : '' }}>Mémoire</option>
                                     </select>
                                 </div>
                                 @error('type_stage')
@@ -319,10 +320,6 @@
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('offres.show', $offre) }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>
-                            Annuler
-                        </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>
                             Mettre à jour

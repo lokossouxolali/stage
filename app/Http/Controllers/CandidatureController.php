@@ -33,6 +33,16 @@ class CandidatureController extends Controller
             return redirect()->route('offres.index')
                 ->with('error', 'Veuillez sélectionner une offre pour postuler.');
         }
+
+        $existingCandidature = Candidature::where('etudiant_id', auth()->id())
+            ->where('offre_id', $offre->id)
+            ->first();
+
+        if ($existingCandidature) {
+            return redirect()
+                ->route('candidatures.show', $existingCandidature)
+                ->with('error', 'Vous avez déjà postulé à cette offre.');
+        }
         
         $offre->load('entreprise');
         return view('candidatures.create', compact('offre'));
@@ -42,9 +52,19 @@ class CandidatureController extends Controller
     {
         $request->validate([
             'offre_id' => 'required|exists:offres,id',
-            'lettre_motivation' => 'required|string|min:200',
+            'lettre_motivation' => 'required|file|mimes:pdf,doc,docx|max:5120',
             'cv_path' => 'required|file|mimes:pdf|max:5120', // 5MB en kilobytes
         ]);
+
+        $existingCandidature = Candidature::where('etudiant_id', auth()->id())
+            ->where('offre_id', $request->offre_id)
+            ->first();
+
+        if ($existingCandidature) {
+            return redirect()
+                ->route('candidatures.show', $existingCandidature)
+                ->with('error', 'Vous avez déjà postulé à cette offre.');
+        }
 
         $data = $request->all();
         $data['etudiant_id'] = auth()->id();
@@ -53,6 +73,11 @@ class CandidatureController extends Controller
 
         if ($request->hasFile('cv_path')) {
             $data['cv_path'] = $request->file('cv_path')->store('cvs', 'public');
+        }
+
+        if ($request->hasFile('lettre_motivation')) {
+            $data['lettre_motivation_path'] = $request->file('lettre_motivation')->store('lettres_motivation', 'public');
+            unset($data['lettre_motivation']);
         }
 
         if ($request->hasFile('lettre_recommandation')) {
@@ -138,7 +163,7 @@ class CandidatureController extends Controller
             'user_id' => $candidature->etudiant_id,
             'type' => 'candidature_acceptee',
             'titre' => 'Candidature acceptée',
-            'message' => 'Votre candidature pour l\'offre "' . $candidature->offre->titre . '" a été acceptée !',
+            'message' => 'Votre candidature a été acceptée',
             'lien' => route('candidatures.show', $candidature),
         ]);
 
@@ -189,13 +214,19 @@ class CandidatureController extends Controller
     public function destroy(Candidature $candidature)
     {
         // Seul l'étudiant propriétaire peut supprimer sa candidature
-        if (auth()->id() !== $candidature->etudiant_id) {
+        if (!auth()->user()->isSuperAdmin() && auth()->id() !== $candidature->etudiant_id) {
             abort(403, 'Vous n\'êtes pas autorisé à supprimer cette candidature');
         }
 
         // Ne peut supprimer que si la candidature est en attente
-        if ($candidature->statut !== 'en_attente') {
+        if (!auth()->user()->isSuperAdmin() && $candidature->statut !== 'en_attente') {
             return back()->with('error', 'Vous ne pouvez supprimer que les candidatures en attente');
+        }
+
+        foreach (['cv_path', 'lettre_motivation_path', 'lettre_recommandation_path'] as $fileField) {
+            if ($candidature->{$fileField}) {
+                Storage::disk('public')->delete($candidature->{$fileField});
+            }
         }
 
         $candidature->delete();
@@ -268,6 +299,39 @@ class CandidatureController extends Controller
 
         $fileName = 'Lettre_recommandation_' . str_replace(' ', '_', $candidature->etudiant->name) . '.pdf';
         return Storage::disk('public')->download($candidature->lettre_recommandation_path, $fileName);
+    }
+
+    public function downloadLettreMotivation(Candidature $candidature)
+    {
+        $candidature->load('etudiant', 'offre.entreprise');
+
+        if (!$candidature->lettre_motivation_path) {
+            abort(404, 'Lettre de motivation non trouvée');
+        }
+
+        $user = auth()->user();
+        $canDownload = false;
+
+        if ($user->isAdmin()) {
+            $canDownload = true;
+        } elseif ($user->isEtudiant() && $candidature->etudiant_id === $user->id) {
+            $canDownload = true;
+        } elseif ($user->isEntreprise() && $candidature->offre && $candidature->offre->entreprise_id === $user->entreprise_id) {
+            $canDownload = true;
+        }
+
+        if (!$canDownload) {
+            abort(403, 'Vous n\'êtes pas autorisé à télécharger ce fichier');
+        }
+
+        if (!Storage::disk('public')->exists($candidature->lettre_motivation_path)) {
+            abort(404, 'Fichier non trouvé à l\'emplacement : ' . $candidature->lettre_motivation_path);
+        }
+
+        $extension = pathinfo($candidature->lettre_motivation_path, PATHINFO_EXTENSION);
+        $fileName = 'Lettre_motivation_' . str_replace(' ', '_', $candidature->etudiant->name) . '.' . $extension;
+
+        return Storage::disk('public')->download($candidature->lettre_motivation_path, $fileName);
     }
 
     public function export()

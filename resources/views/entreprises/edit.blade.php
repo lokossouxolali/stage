@@ -16,7 +16,7 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('entreprises.update', $entreprise) }}">
                     @csrf
-                    @method('PUT')
+                    @method('PATCH')
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -199,10 +199,6 @@
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('entreprises.show', $entreprise) }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>
-                            Annuler
-                        </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>
                             Mettre à jour

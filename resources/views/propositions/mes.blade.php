@@ -12,7 +12,7 @@
         </h6>
     </div>
     <div class="col-md-6 text-end">
-        <a href="{{ route('propositions.create') }}" class="btn btn-sm" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+        <a href="{{ route('propositions.create') }}" class="btn btn-sm" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
             <i class="fas fa-plus me-1"></i>
             Nouvelle proposition
         </a>
@@ -84,7 +84,7 @@
             <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">Aucune proposition de thème</h5>
             <p class="text-muted mb-4">Vous n'avez pas encore soumis de proposition de thème.</p>
-            <a href="{{ route('propositions.create') }}" class="btn" style="background-color: #2d3748; border-color: #2d3748; color: #ffffff;">
+            <a href="{{ route('propositions.create') }}" class="btn" style="background-color: #0b1f4d; border-color: #0b1f4d; color: #ffffff;">
                 <i class="fas fa-plus me-1"></i>
                 Créer ma première proposition
             </a>

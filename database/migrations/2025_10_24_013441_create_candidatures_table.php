@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('etudiant_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('offre_id')->constrained()->onDelete('cascade');
             $table->text('lettre_motivation')->nullable();
+            $table->string('lettre_motivation_path')->nullable();
             $table->string('cv_path')->nullable();
             $table->string('lettre_recommandation_path')->nullable();
             $table->text('commentaires_etudiant')->nullable();

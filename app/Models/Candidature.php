@@ -13,6 +13,7 @@ class Candidature extends Model
         'etudiant_id',
         'offre_id',
         'lettre_motivation',
+        'lettre_motivation_path',
         'cv_path',
         'lettre_recommandation_path',
         'commentaires_etudiant',

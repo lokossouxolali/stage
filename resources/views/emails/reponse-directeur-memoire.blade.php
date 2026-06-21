@@ -6,7 +6,7 @@
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2d3748;">
+        <h2 style="color: #0b1f4d;">
             @if($accepte)
                 Demande d'encadrement acceptée
             @else
@@ -31,7 +31,7 @@
         @endif
         
         <p style="margin-top: 30px;">
-            <a href="{{ route('profile.show') }}" style="display: inline-block; padding: 10px 20px; background-color: #2d3748; color: #ffffff; text-decoration: none; border-radius: 5px;">
+            <a href="{{ route('profile.show') }}" style="display: inline-block; padding: 10px 20px; background-color: #0b1f4d; color: #ffffff; text-decoration: none; border-radius: 5px;">
                 Accéder à mon profil
             </a>
         </p>

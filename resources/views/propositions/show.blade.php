@@ -19,10 +19,6 @@
                             Modifier
                         </a>
                     @endcan
-                    <a href="{{ route('propositions.mes') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i>
-                        Retour
-                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -71,11 +67,11 @@
                             <label class="form-label fw-bold">Destinataires</label>
                             <p class="form-control-plaintext">
                                 @if($proposition->envoye_au_directeur && $proposition->envoye_a_l_admin)
-                                    Directeur de mémoire + Administrateur
+                                    Directeur de mémoire + Responsable pedagogique
                                 @elseif($proposition->envoye_au_directeur)
                                     Directeur de mémoire uniquement
                                 @elseif($proposition->envoye_a_l_admin)
-                                    Administrateur uniquement
+                                    Responsable pedagogique uniquement
                                 @else
                                     Aucun destinataire
                                 @endif
@@ -117,7 +113,7 @@
                                     <div class="col-md-6 mb-2">
                                         <div class="card border">
                                             <div class="card-body text-center">
-                                                <i class="fas fa-file-pdf fa-2x mb-2" style="color: #2d3748;"></i>
+                                                <i class="fas fa-file-pdf fa-2x mb-2" style="color: #0b1f4d;"></i>
                                                 <div class="fw-bold">Fiche de stage</div>
                                                 <a href="{{ route('propositions.download.fiche', $proposition) }}"
                                                    target="_blank"
@@ -134,7 +130,7 @@
                                     <div class="col-md-6 mb-2">
                                         <div class="card border">
                                             <div class="card-body text-center">
-                                                <i class="fas fa-file-pdf fa-2x mb-2" style="color: #2d3748;"></i>
+                                                <i class="fas fa-file-pdf fa-2x mb-2" style="color: #0b1f4d;"></i>
                                                 <div class="fw-bold">Proposition de thème</div>
                                                 <a href="{{ route('propositions.download.theme', $proposition) }}"
                                                    target="_blank"
@@ -159,7 +155,7 @@
 
                             @if($proposition->commentaires_admin)
                                 <div class="alert alert-info">
-                                    <strong>Administrateur :</strong> {{ $proposition->commentaires_admin }}
+                                    <strong>Responsable pedagogique :</strong> {{ $proposition->commentaires_admin }}
                                 </div>
                             @endif
 
@@ -189,13 +185,13 @@
                                             @method('PATCH')
                                             <button type="submit" class="btn btn-success btn-sm me-2">
                                                 <i class="fas fa-check me-1"></i>
-                                                Valider (Admin)
+                                                Valider
                                             </button>
                                         </form>
 
                                         <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#refuserModal">
                                             <i class="fas fa-times me-1"></i>
-                                            Refuser (Admin)
+                                            Refuser
                                         </button>
                                     @endif
 
@@ -250,7 +246,6 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-danger">Refuser</button>
                 </div>
             </form>

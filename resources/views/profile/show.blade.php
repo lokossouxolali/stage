@@ -31,8 +31,12 @@
                         @endif
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.9rem;">{{ auth()->user()->name }}</h6>
                         @switch(auth()->user()->role)
+                            @case('super_admin')
+                                <span class="role-badge role-super-admin">SUPER ADMINISTRATEUR</span>
+                                @break
+                            @case('responsable_pedagogique')
                             @case('admin')
-                                <span class="role-badge role-admin">ADMINISTRATEUR</span>
+                                <span class="role-badge role-admin">RESPONSABLE PEDAGOGIQUE</span>
                                 @break
                             @case('etudiant')
                                 <span class="role-badge role-etudiant">ÉTUDIANT</span>
@@ -55,44 +59,44 @@
                         <div class="row g-3">
                             <div class="col-sm-6">
                                 <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Nom complet</label>
-                                <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">{{ auth()->user()->name }}</p>
+                                <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->name }}</p>
                             </div>
                             
                             <div class="col-sm-6">
                                 <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Email</label>
-                                <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">{{ auth()->user()->email }}</p>
+                                <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->email }}</p>
                             </div>
                             
                             <div class="col-sm-6">
                                 <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Rôle</label>
-                                <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">{{ ucfirst(auth()->user()->role) }}</p>
+                                <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->roleLabel() }}</p>
                             </div>
                             
                             <div class="col-sm-6">
                                 <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Membre depuis</label>
-                                <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">{{ auth()->user()->created_at->format('d/m/Y') }}</p>
+                                <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->created_at->format('d/m/Y') }}</p>
                             </div>
 
                             @if(auth()->user()->telephone)
                             <div class="col-sm-6">
                                 <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Téléphone</label>
-                                <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">{{ auth()->user()->telephone }}</p>
+                                <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->telephone }}</p>
                             </div>
                             @endif
 
                             @if(auth()->user()->isEtudiant())
                                 <div class="col-sm-6">
                                     <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Niveau d'étude</label>
-                                    <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">{{ auth()->user()->niveau_etude ?? 'Non renseigné' }}</p>
+                                    <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->niveau_etude ?? 'Non renseigné' }}</p>
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Filière</label>
-                                    <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">{{ auth()->user()->filiere ?? 'Non renseigné' }}</p>
+                                    <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->filiere ?? 'Non renseigné' }}</p>
                                 </div>
                                 <div class="col-sm-12">
                                     <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Directeur de mémoire</label>
                                     @if(auth()->user()->directeur_memoire_id)
-                                        <p class="mb-0" style="font-size: 0.85rem; color: #1f2937;">
+                                        <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">
                                             <i class="fas fa-user-tie me-2" style="color: #6c757d;"></i>
                                             {{ auth()->user()->directeurMemoire->name ?? 'Non défini' }}
                                             @if(auth()->user()->statut_demande_dm === 'en_attente')
@@ -156,7 +160,7 @@
         width: 80px;
         height: 80px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        background: linear-gradient(135deg, #081a3d 0%, #123a7a 100%);
         color: white;
         display: flex;
         align-items: center;
@@ -176,13 +180,18 @@
         text-transform: uppercase;
     }
 
-    .role-admin {
+    .role-super-admin {
         background-color: #fee2e2;
-        color: #dc2626;
+        color: #991b1b;
+    }
+
+    .role-admin {
+        background-color: #fef3c7;
+        color: #92400e;
     }
 
     .role-etudiant {
-        background-color: #1f2937;
+        background-color: #081a3d;
         color: #ffffff;
     }
 
@@ -198,12 +207,12 @@
 
     .role-responsable {
         background-color: #e5e7eb;
-        color: #374151;
+        color: #123a7a;
     }
 
     .role-default {
         background-color: #f3f4f6;
-        color: #6b7280;
+        color: #31527f;
     }
 
     .card {
@@ -211,8 +220,8 @@
     }
 
     .btn-dark {
-        background-color: #1f2937;
-        border-color: #1f2937;
+        background-color: #081a3d;
+        border-color: #081a3d;
         color: #ffffff;
     }
 
@@ -224,13 +233,13 @@
 
     .btn-outline-secondary {
         border-color: #d1d5db;
-        color: #6b7280;
+        color: #31527f;
     }
 
     .btn-outline-secondary:hover {
         background-color: #f3f4f6;
         border-color: #d1d5db;
-        color: #374151;
+        color: #123a7a;
     }
 </style>
 @endpush

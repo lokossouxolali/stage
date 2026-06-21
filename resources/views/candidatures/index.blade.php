@@ -34,9 +34,10 @@
                     <div class="col-md-3">
                         <select class="form-select" id="typeFilter">
                             <option value="">Tous les types</option>
-                            <option value="Obligatoire">Obligatoire</option>
-                            <option value="Facultatif">Facultatif</option>
-                            <option value="PFE">PFE</option>
+                            <option value="Perfectionnement">Perfectionnement</option>
+                            <option value="Professionnel">Professionnel</option>
+                            <option value="Académique">Académique</option>
+                            <option value="Mémoire">Mémoire</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -172,7 +173,6 @@
                 <p class="text-danger"><strong>Cette action est irréversible.</strong></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 <form id="deleteForm" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')
