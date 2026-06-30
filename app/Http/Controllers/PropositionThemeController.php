@@ -179,7 +179,7 @@ class PropositionThemeController extends Controller
             'directeur_memoire_id' => 'nullable|exists:users,id',
         ]);
 
-        $proposition->update($request->all());
+        $proposition->update($request->only(['titre', 'description', 'objectifs', 'methodologie', 'directeur_memoire_id']));
 
         return redirect()->route('propositions.show', $proposition->id)
             ->with('success', 'Proposition mise à jour avec succès');

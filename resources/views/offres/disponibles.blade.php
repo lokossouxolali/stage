@@ -38,13 +38,11 @@
                                     <td>{{ $offre->duree ? $offre->duree . ' mois' : '-' }}</td>
                                     <td>{{ $offre->date_limite_candidature ? $offre->date_limite_candidature->format('d/m/Y') : 'Non definie' }}</td>
                                     <td class="text-end">
-                                        <a href="{{ route('offres.show', $offre) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye me-1"></i>
-                                            Voir
+                                        <a href="{{ route('offres.show', $offre) }}" class="action-button" title="Voir l'offre">
+                                            <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('candidatures.create', $offre) }}" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-paper-plane me-1"></i>
-                                            Postuler
+                                        <a href="{{ route('candidatures.create', $offre) }}" class="action-button" title="Postuler" style="color:#0b1f4d;">
+                                            <i class="fas fa-paper-plane"></i>
                                         </a>
                                     </td>
                                 </tr>

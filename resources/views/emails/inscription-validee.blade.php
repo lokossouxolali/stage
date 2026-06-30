@@ -64,9 +64,9 @@
         
         <p>Vous pouvez maintenant accéder à toutes les fonctionnalités de la plateforme selon votre rôle.</p>
         
-        <div style="text-align: center;">
+        {{-- <div style="text-align: center;">
             <a href="{{ url('/login') }}" class="button">Se connecter</a>
-        </div>
+        </div> --}}
         
         <p style="margin-top: 30px;">Si vous avez des questions, n'hésitez pas à nous contacter.</p>
         

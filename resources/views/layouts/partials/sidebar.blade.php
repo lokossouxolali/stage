@@ -38,8 +38,11 @@
                 <i class="fas fa-users"></i><span>Utilisateurs</span>
             </a>
             @if($user->isSuperAdmin())
-                <a class="nav-link {{ request()->routeIs('users.*') && request('role') ? 'active' : '' }}" href="{{ route('users.index', ['role' => 'responsable_pedagogique']) }}">
-                    <i class="fas fa-user-shield"></i><span>Gestion des roles</span>
+                <a class="nav-link {{ request()->routeIs('users.index') && request('role') === 'responsable_pedagogique' ? 'active' : '' }}" href="{{ route('users.index', ['role' => 'responsable_pedagogique']) }}">
+                    <i class="fas fa-user-shield"></i><span>Resp. Pédagogiques</span>
+                </a>
+                <a class="nav-link {{ request()->routeIs('users.create') && request('role') === 'responsable_pedagogique' ? 'active' : '' }}" href="{{ route('users.create', ['role' => 'responsable_pedagogique']) }}">
+                    <i class="fas fa-user-plus"></i><span>Ajouter Resp. Péda.</span>
                 </a>
             @endif
             <a class="nav-link {{ request()->routeIs('registration-tokens.*') ? 'active' : '' }}" href="{{ route('registration-tokens.index') }}">

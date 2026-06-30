@@ -25,6 +25,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/register/verify', [AuthController::class, 'showRegisterOtpForm'])->name('register.verify');
     Route::post('/register/verify', [AuthController::class, 'verifyRegistrationOtp'])->name('register.verify.submit');
     Route::post('/register/verify/resend', [AuthController::class, 'resendRegistrationOtp'])->name('register.verify.resend');
+
+    // Mot de passe oublié (authentification à deux facteurs par email)
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetOtp'])->name('password.email');
+    Route::get('/reset-password', [AuthController::class, 'showResetPasswordForm'])->name('password.reset.form');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -87,14 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:etudiant,admin')->group(function () {
         Route::get('/mes-candidatures', [CandidatureController::class, 'mesCandidatures'])->name('candidatures.mes');
         Route::get('/offres-disponibles', [OffreController::class, 'offresDisponibles'])->name('offres.disponibles');
-        Route::get('/choisir-directeur-memoire', function() {
-            $enseignants = \App\Models\User::where('role', 'enseignant')
-                ->where('statut_inscription', 'valide')
-                ->where('est_actif', true)
-                ->orderBy('name')
-                ->get();
-            return view('users.choisir-directeur', compact('enseignants'));
-        })->name('users.choisir-directeur-memoire');
+        Route::get('/choisir-directeur-memoire', [UserController::class, 'choisirDirecteurMemoireForm'])->name('users.choisir-directeur-memoire');
         Route::post('/choisir-directeur-memoire', [UserController::class, 'choisirDirecteurMemoire'])->name('users.choisir-directeur-memoire.store');
         Route::get('/liste-enseignants', [UserController::class, 'listeEnseignants'])->name('users.liste-enseignants');
     });

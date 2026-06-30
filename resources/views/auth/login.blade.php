@@ -37,6 +37,7 @@
                     <input type="checkbox" class="form-check-input" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
                     <label class="form-check-label" for="remember">Se souvenir de moi</label>
                 </div>
+                <a href="{{ route('password.request') }}" class="small text-primary">Mot de passe oublié ?</a>
             </div>
 
             <button type="submit" class="btn btn-primary w-100" data-loading-text="Connexion...">

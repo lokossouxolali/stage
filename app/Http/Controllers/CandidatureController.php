@@ -238,28 +238,12 @@ class CandidatureController extends Controller
     public function downloadCv(Candidature $candidature)
     {
         $candidature->load('etudiant', 'offre.entreprise');
-        
+        $this->authorizeFileDownload($candidature);
+
         if (!$candidature->cv_path) {
             abort(404, 'CV non trouvé');
         }
 
-        // Vérifier les permissions : l'étudiant propriétaire, l'entreprise de l'offre, ou un admin
-        $user = auth()->user();
-        $canDownload = false;
-
-        if ($user->isAdmin()) {
-            $canDownload = true;
-        } elseif ($user->isEtudiant() && $candidature->etudiant_id === $user->id) {
-            $canDownload = true;
-        } elseif ($user->isEntreprise() && $candidature->offre && $candidature->offre->entreprise_id === $user->entreprise_id) {
-            $canDownload = true;
-        }
-
-        if (!$canDownload) {
-            abort(403, 'Vous n\'êtes pas autorisé à télécharger ce fichier');
-        }
-
-        // Vérifier si le fichier existe sur le disque public
         if (!Storage::disk('public')->exists($candidature->cv_path)) {
             abort(404, 'Fichier non trouvé à l\'emplacement : ' . $candidature->cv_path);
         }
@@ -271,28 +255,12 @@ class CandidatureController extends Controller
     public function downloadLettreRecommandation(Candidature $candidature)
     {
         $candidature->load('etudiant', 'offre.entreprise');
-        
+        $this->authorizeFileDownload($candidature);
+
         if (!$candidature->lettre_recommandation_path) {
             abort(404, 'Lettre de recommandation non trouvée');
         }
 
-        // Vérifier les permissions : l'étudiant propriétaire, l'entreprise de l'offre, ou un admin
-        $user = auth()->user();
-        $canDownload = false;
-
-        if ($user->isAdmin()) {
-            $canDownload = true;
-        } elseif ($user->isEtudiant() && $candidature->etudiant_id === $user->id) {
-            $canDownload = true;
-        } elseif ($user->isEntreprise() && $candidature->offre && $candidature->offre->entreprise_id === $user->entreprise_id) {
-            $canDownload = true;
-        }
-
-        if (!$canDownload) {
-            abort(403, 'Vous n\'êtes pas autorisé à télécharger ce fichier');
-        }
-
-        // Vérifier si le fichier existe sur le disque public
         if (!Storage::disk('public')->exists($candidature->lettre_recommandation_path)) {
             abort(404, 'Fichier non trouvé à l\'emplacement : ' . $candidature->lettre_recommandation_path);
         }
@@ -304,24 +272,10 @@ class CandidatureController extends Controller
     public function downloadLettreMotivation(Candidature $candidature)
     {
         $candidature->load('etudiant', 'offre.entreprise');
+        $this->authorizeFileDownload($candidature);
 
         if (!$candidature->lettre_motivation_path) {
             abort(404, 'Lettre de motivation non trouvée');
-        }
-
-        $user = auth()->user();
-        $canDownload = false;
-
-        if ($user->isAdmin()) {
-            $canDownload = true;
-        } elseif ($user->isEtudiant() && $candidature->etudiant_id === $user->id) {
-            $canDownload = true;
-        } elseif ($user->isEntreprise() && $candidature->offre && $candidature->offre->entreprise_id === $user->entreprise_id) {
-            $canDownload = true;
-        }
-
-        if (!$canDownload) {
-            abort(403, 'Vous n\'êtes pas autorisé à télécharger ce fichier');
         }
 
         if (!Storage::disk('public')->exists($candidature->lettre_motivation_path)) {
@@ -332,6 +286,19 @@ class CandidatureController extends Controller
         $fileName = 'Lettre_motivation_' . str_replace(' ', '_', $candidature->etudiant->name) . '.' . $extension;
 
         return Storage::disk('public')->download($candidature->lettre_motivation_path, $fileName);
+    }
+
+    private function authorizeFileDownload(Candidature $candidature): void
+    {
+        $user = auth()->user();
+
+        $canDownload = $user->isAdmin()
+            || ($user->isEtudiant() && $candidature->etudiant_id === $user->id)
+            || ($user->isEntreprise() && $candidature->offre && $candidature->offre->entreprise_id === $user->entreprise_id);
+
+        if (!$canDownload) {
+            abort(403, 'Vous n\'êtes pas autorisé à télécharger ce fichier');
+        }
     }
 
     public function export()

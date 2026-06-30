@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Nouvel utilisateur')
-@section('page-title', 'Nouvel utilisateur')
+@section('title', isset($defaultRole) && $defaultRole === 'responsable_pedagogique' ? 'Nouveau Responsable Pédagogique' : 'Nouvel utilisateur')
+@section('page-title', isset($defaultRole) && $defaultRole === 'responsable_pedagogique' ? 'Nouveau Responsable Pédagogique' : 'Nouvel utilisateur')
 
 @section('content')
 <div class="row">
@@ -32,7 +32,7 @@
                             <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
                                 <option value="">Selectionner</option>
                                 @foreach($roleLabels as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('role') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" @selected(old('role', $defaultRole ?? '') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror

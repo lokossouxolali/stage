@@ -77,25 +77,13 @@
                         
                         <div class="mb-3">
                             <label class="form-label fw-bold">Secteur d'activité</label>
-                            <p class="form-control-plaintext">
-                                <span class="badge bg-info fs-6">{{ $entreprise->secteur_activite }}</span>
-                            </p>
+                            <p class="form-control-plaintext">{{ $entreprise->secteur_activite }}</p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Statut de vérification</label>
                             <p class="form-control-plaintext">
-                                @if($entreprise->est_verifiee)
-                                    <span class="badge bg-success fs-6">
-                                        <i class="fas fa-check me-1"></i>
-                                        Vérifiée
-                                    </span>
-                                @else
-                                    <span class="badge bg-warning fs-6">
-                                        <i class="fas fa-clock me-1"></i>
-                                        En attente de vérification
-                                    </span>
-                                @endif
+                                {{ $entreprise->est_verifiee ? 'Vérifiée' : 'En attente de vérification' }}
                             </p>
                         </div>
                         

@@ -1,5 +1,9 @@
 @php
-    $notificationsNonLues = \App\Models\Notification::where('user_id', auth()->id())->where('lu', false)->count();
+    $notificationsNonLues = cache()->remember(
+        'notif_count_' . auth()->id(),
+        30,
+        fn () => \App\Models\Notification::where('user_id', auth()->id())->where('lu', false)->count()
+    );
 @endphp
 
 <header class="topbar">
@@ -105,7 +109,7 @@ setInterval(async () => {
     } catch (error) {
         // Le badge se rafraîchira au prochain intervalle.
     }
-}, 10000);
+}, 30000);
 
 function escapeNotificationText(value) {
     return String(value)

@@ -6,6 +6,7 @@ use App\Mail\InscriptionEnAttente;
 use App\Mail\OtpCodeMail;
 use App\Models\Entreprise;
 use App\Models\Notification;
+use App\Models\PasswordChangeOtp;
 use App\Models\PendingRegistration;
 use App\Models\RegistrationToken;
 use App\Models\User;
@@ -192,6 +193,101 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function showForgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function sendPasswordResetOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ], [
+            'email.exists' => 'Aucun compte n\'est associé à cet email.',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user->est_actif || $user->statut_inscription !== 'valide') {
+            return back()->withErrors(['email' => 'Ce compte n\'est pas actif. Contactez l\'administration.']);
+        }
+
+        PasswordChangeOtp::where('user_id', $user->id)->whereNull('used_at')->delete();
+
+        $otp = (string) random_int(100000, 999999);
+
+        PasswordChangeOtp::create([
+            'user_id' => $user->id,
+            'otp_hash' => Hash::make($otp),
+            'password_hash' => null,
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        try {
+            Mail::to($user->email)->send(new OtpCodeMail($otp, 'la réinitialisation de votre mot de passe'));
+        } catch (\Exception $e) {
+            \Log::error('Erreur envoi OTP reset password : ' . $e->getMessage());
+            return back()->withErrors(['email' => 'Impossible d\'envoyer le code. Vérifiez la configuration email.']);
+        }
+
+        session(['reset_password_user_id' => $user->id]);
+
+        return redirect()->route('password.reset.form')
+            ->with('success', 'Un code OTP a été envoyé à ' . $user->email . '. Il expire dans 10 minutes.');
+    }
+
+    public function showResetPasswordForm()
+    {
+        if (!session('reset_password_user_id')) {
+            return redirect()->route('password.request')
+                ->with('error', 'Veuillez d\'abord saisir votre adresse email.');
+        }
+
+        return view('auth.reset-password');
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $userId = session('reset_password_user_id');
+
+        if (!$userId) {
+            return redirect()->route('password.request')
+                ->with('error', 'Session expirée. Recommencez la procédure.');
+        }
+
+        $request->validate([
+            'otp_code' => 'required|digits:6',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $otp = PasswordChangeOtp::where('user_id', $userId)
+            ->whereNull('used_at')
+            ->whereNull('password_hash')
+            ->latest()
+            ->first();
+
+        if (!$otp) {
+            return back()->withErrors(['otp_code' => 'Aucune demande de réinitialisation en attente.']);
+        }
+
+        if ($otp->expires_at->isPast()) {
+            return back()->withErrors(['otp_code' => 'Le code OTP a expiré. Recommencez la procédure.']);
+        }
+
+        if (!Hash::check($request->otp_code, $otp->otp_hash)) {
+            return back()->withErrors(['otp_code' => 'Code OTP incorrect.']);
+        }
+
+        $user = User::findOrFail($userId);
+        $user->update(['password' => Hash::make($request->password)]);
+
+        $otp->update(['used_at' => now()]);
+        session()->forget('reset_password_user_id');
+
+        return redirect()->route('login')
+            ->with('success', 'Mot de passe réinitialisé avec succès. Vous pouvez vous connecter.');
     }
 
     private function validateRegistration(Request $request): array

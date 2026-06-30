@@ -93,7 +93,7 @@
         </div>
     </div>
 
-    <div class="col-xl-4">
+    {{-- <div class="col-xl-4">
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <span><i class="fas fa-bell me-2 text-primary"></i>Notifications recentes</span>
@@ -121,7 +121,7 @@
                 @endforelse
             </div>
         </div>
-    </div>
+    </div> --}}
 </div>
 
 <div class="card mt-4">
@@ -131,10 +131,9 @@
     <div class="card-body">
         <div class="row g-3">
             @if(auth()->user()->isAdmin())
-                <div class="col-md-3"><a href="{{ route('users.create') }}" class="btn btn-primary w-100"><i class="fas fa-user-plus me-2"></i>Utilisateur</a></div>
-                <div class="col-md-3"><a href="{{ route('entreprises.create') }}" class="btn btn-outline-primary w-100"><i class="fas fa-building me-2"></i>Entreprise</a></div>
-                <div class="col-md-3"><a href="{{ route('users.index') }}" class="btn btn-outline-primary w-100"><i class="fas fa-table me-2"></i>Annuaire</a></div>
-                <div class="col-md-3"><a href="{{ route('statistiques') }}" class="btn btn-outline-primary w-100"><i class="fas fa-chart-pie me-2"></i>Statistiques</a></div>
+                <div class="col-md-4"><a href="{{ route('users.create') }}" class="btn btn-primary w-100"><i class="fas fa-user-plus me-2"></i>Utilisateur</a></div>
+                <div class="col-md-4"><a href="{{ route('entreprises.create') }}" class="btn btn-outline-primary w-100"><i class="fas fa-building me-2"></i>Entreprise</a></div>
+                <div class="col-md-4"><a href="{{ route('users.index') }}" class="btn btn-outline-primary w-100"><i class="fas fa-table me-2"></i>Annuaire</a></div>
             @elseif(auth()->user()->isEntreprise())
                 <div class="col-md-4"><a href="{{ route('offres.create') }}" class="btn btn-primary w-100"><i class="fas fa-plus me-2"></i>Publier une offre</a></div>
                 <div class="col-md-4"><a href="{{ route('offres.mes') }}" class="btn btn-outline-primary w-100"><i class="fas fa-list me-2"></i>Mes offres</a></div>
@@ -155,45 +154,8 @@
 @if(auth()->user()->isAdmin())
 @push('scripts')
 <script>
-    const chartColors = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b'];
-    const roles = @json($charts['roles']);
-    const propositions = @json($charts['propositions']);
-
-    new Chart(document.getElementById('rolesChart'), {
-        type: 'bar',
-        data: {
-            labels: roles.labels,
-            datasets: [{
-                label: 'Utilisateurs',
-                data: roles.data,
-                backgroundColor: chartColors,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
-    });
-
-    new Chart(document.getElementById('propositionsChart'), {
-        type: 'doughnut',
-        data: {
-            labels: propositions.labels,
-            datasets: [{
-                data: propositions.data,
-                backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
+    window.dashboardCharts = @json($charts);
 </script>
+@vite('resources/js/dashboard-charts.js')
 @endpush
 @endif

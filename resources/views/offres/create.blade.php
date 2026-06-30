@@ -4,15 +4,9 @@
 @section('page-title', 'Publier une offre de stage')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-8">
+<div class="row">
+    <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-plus me-2"></i>
-                    Informations de l'offre
-                </h5>
-            </div>
             <div class="card-body">
                 <form method="POST" action="{{ route('offres.store') }}">
                     @csrf

@@ -52,12 +52,20 @@ class UserController extends Controller
 
         $users = $query->latest()->paginate(10)->withQueryString();
 
+        $counts = User::selectRaw("
+            COUNT(*) as total,
+            SUM(CASE WHEN est_actif = 1 THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN statut_inscription = 'en_attente' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN role IN (?, ?) THEN 1 ELSE 0 END) as admins,
+            SUM(CASE WHEN role = ? THEN 1 ELSE 0 END) as super_admins
+        ", [User::ROLE_ADMIN, User::ROLE_LEGACY_ADMIN, User::ROLE_SUPER_ADMIN])->first();
+
         $summary = [
-            'total' => User::count(),
-            'active' => User::where('est_actif', true)->count(),
-            'pending' => User::where('statut_inscription', 'en_attente')->count(),
-            'admins' => User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_LEGACY_ADMIN])->count(),
-            'super_admins' => User::where('role', User::ROLE_SUPER_ADMIN)->count(),
+            'total' => (int) $counts->total,
+            'active' => (int) $counts->active,
+            'pending' => (int) $counts->pending,
+            'admins' => (int) $counts->admins,
+            'super_admins' => (int) $counts->super_admins,
         ];
 
         $roleLabels = User::roleLabels();
@@ -66,11 +74,12 @@ class UserController extends Controller
         return view('users.index', compact('users', 'summary', 'roleLabels'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $roleLabels = $this->assignableRoleLabels();
+        $defaultRole = $request->get('role');
 
-        return view('users.create', compact('roleLabels'));
+        return view('users.create', compact('roleLabels', 'defaultRole'));
     }
 
     public function store(Request $request)
@@ -302,71 +311,39 @@ class UserController extends Controller
     public function validerInscription(User $user)
     {
         $user->update(['statut_inscription' => 'valide', 'est_actif' => true]);
-        
-        // Envoyer un email de confirmation
-        try {
-            Mail::to($user->email)->send(new InscriptionValidee($user));
-            
-            // Créer une notification pour l'utilisateur
-            Notification::create([
-                'user_id' => $user->id,
-                'type' => 'inscription_validee',
-                'titre' => 'Inscription validée',
-                'message' => 'Votre inscription a été validée par un responsable pedagogique. Vous pouvez maintenant vous connecter à votre compte.',
-                'lien' => route('login'),
-            ]);
-            
-            return back()->with('success', 'Inscription validée avec succès. Un email de confirmation a été envoyé à ' . $user->email);
-        } catch (\Exception $e) {
-            // Log l'erreur mais continue l'exécution
-            \Log::error('Erreur lors de l\'envoi de l\'email de validation : ' . $e->getMessage());
-            
-            // Créer quand même une notification pour l'utilisateur
-            Notification::create([
-                'user_id' => $user->id,
-                'type' => 'inscription_validee',
-                'titre' => 'Inscription validée',
-                'message' => 'Votre inscription a été validée par un responsable pedagogique. Vous pouvez maintenant vous connecter à votre compte.',
-                'lien' => route('login'),
-            ]);
-            
-            return back()->with('success', 'Inscription validée avec succès. Note : L\'envoi de l\'email a échoué, mais l\'utilisateur a été notifié dans l\'application.');
-        }
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'inscription_validee',
+            'titre' => 'Inscription validée',
+            'message' => 'Votre inscription a été validée par un responsable pedagogique. Vous pouvez maintenant vous connecter à votre compte.',
+            'lien' => route('login'),
+        ]);
+
+        $emailEnvoye = $this->sendMailSafely(fn () => Mail::to($user->email)->send(new InscriptionValidee($user)), 'email de validation');
+
+        return back()->with('success', $emailEnvoye
+            ? 'Inscription validée avec succès. Un email de confirmation a été envoyé à ' . $user->email
+            : 'Inscription validée avec succès. Note : L\'envoi de l\'email a échoué, mais l\'utilisateur a été notifié dans l\'application.');
     }
 
     public function refuserInscription(User $user)
     {
         $user->update(['statut_inscription' => 'refuse', 'est_actif' => false]);
-        
-        // Envoyer un email de notification
-        try {
-            Mail::to($user->email)->send(new InscriptionRefusee($user));
-            
-            // Créer une notification pour l'utilisateur
-            Notification::create([
-                'user_id' => $user->id,
-                'type' => 'inscription_refusee',
-                'titre' => 'Inscription refusée',
-                'message' => 'Votre inscription a été refusée par un responsable pedagogique. Veuillez contacter l\'administration pour plus d\'informations.',
-                'lien' => null,
-            ]);
-            
-            return back()->with('success', 'Inscription refusée. Un email de notification a été envoyé à ' . $user->email);
-        } catch (\Exception $e) {
-            // Log l'erreur mais continue l'exécution
-            \Log::error('Erreur lors de l\'envoi de l\'email de refus : ' . $e->getMessage());
-            
-            // Créer quand même une notification pour l'utilisateur
-            Notification::create([
-                'user_id' => $user->id,
-                'type' => 'inscription_refusee',
-                'titre' => 'Inscription refusée',
-                'message' => 'Votre inscription a été refusée par un responsable pedagogique. Veuillez contacter l\'administration pour plus d\'informations.',
-                'lien' => null,
-            ]);
-            
-            return back()->with('success', 'Inscription refusée. Note : L\'envoi de l\'email a échoué, mais l\'utilisateur a été notifié dans l\'application.');
-        }
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'inscription_refusee',
+            'titre' => 'Inscription refusée',
+            'message' => 'Votre inscription a été refusée par un responsable pedagogique. Veuillez contacter l\'administration pour plus d\'informations.',
+            'lien' => null,
+        ]);
+
+        $emailEnvoye = $this->sendMailSafely(fn () => Mail::to($user->email)->send(new InscriptionRefusee($user)), 'email de refus');
+
+        return back()->with('success', $emailEnvoye
+            ? 'Inscription refusée. Un email de notification a été envoyé à ' . $user->email
+            : 'Inscription refusée. Note : L\'envoi de l\'email a échoué, mais l\'utilisateur a été notifié dans l\'application.');
     }
 
     public function choisirDirecteurMemoire(Request $request)
@@ -670,6 +647,17 @@ class UserController extends Controller
         }
     }
 
+    public function choisirDirecteurMemoireForm()
+    {
+        $enseignants = User::where('role', 'enseignant')
+            ->where('statut_inscription', 'valide')
+            ->where('est_actif', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('users.choisir-directeur', compact('enseignants'));
+    }
+
     /**
      * Consulter la liste des enseignants (Étudiant)
      */
@@ -701,6 +689,17 @@ class UserController extends Controller
             ->paginate(10);
 
         return view('users.etudiants-encadres', compact('etudiants'));
+    }
+
+    private function sendMailSafely(callable $sendFn, string $context = 'email'): bool
+    {
+        try {
+            $sendFn();
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'envoi du ' . $context . ' : ' . $e->getMessage());
+            return false;
+        }
     }
 
     private function assignableRoleLabels(?User $targetUser = null): array

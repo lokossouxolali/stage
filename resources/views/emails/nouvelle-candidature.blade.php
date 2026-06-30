@@ -50,9 +50,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    {{-- <div class="header">
         <h1>Nouvelle candidature reçue</h1>
-    </div>
+    </div> --}}
     
     <div class="content">
         <p>Bonjour,</p>
@@ -80,7 +80,8 @@
         
         <p>Vous pouvez consulter les détails de cette candidature et prendre une décision en cliquant sur le bouton ci-dessous :</p>
         
-        <a href="{{ route('candidatures.show', $candidature) }}" class="button">Voir la candidature</a>
+        
+        {{-- <a href="{{ route('candidatures.show', $candidature) }}" class="button">Voir la candidature</a> --}}
         
         <p>Cordialement,<br>L'équipe de gestion de stages</p>
     </div>

@@ -14,9 +14,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    {{-- <div class="header">
         <h1>Nouvelle offre de stage</h1>
-    </div>
+    </div> --}}
 
     <div class="content">
         <p>Bonjour {{ $destinataire->name }},</p>
@@ -36,7 +36,7 @@
             @endif
         </div>
 
-        <a href="{{ route('offres.show', $offre) }}" class="button">Voir l'offre</a>
+        {{-- <a href="{{ route('offres.show', $offre) }}" class="button">Voir l'offre</a> --}}
 
         <p>Cordialement,<br>L'équipe de gestion de stages</p>
     </div>

@@ -40,9 +40,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    {{-- <div class="header">
         <h1>❌ Inscription Refusée</h1>
-    </div>
+    </div> --}}
     <div class="content">
         <p>Bonjour <strong>{{ $user->name }}</strong>,</p>
         

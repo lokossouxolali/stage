@@ -24,12 +24,12 @@ class NotificationController extends Controller
      */
     public function marquerLue(Notification $notification)
     {
-        // Vérifier que la notification appartient à l'utilisateur
         if ($notification->user_id !== auth()->id()) {
             abort(403, 'Vous n\'êtes pas autorisé à modifier cette notification');
         }
 
         $notification->marquerCommeLue();
+        cache()->forget('notif_count_' . auth()->id());
 
         return back()->with('success', 'Notification marquée comme lue');
     }
@@ -46,6 +46,8 @@ class NotificationController extends Controller
                 'date_lecture' => now(),
             ]);
 
+        cache()->forget('notif_count_' . auth()->id());
+
         return back()->with('success', 'Toutes les notifications ont été marquées comme lues');
     }
 
@@ -54,12 +56,12 @@ class NotificationController extends Controller
      */
     public function destroy(Notification $notification)
     {
-        // Vérifier que la notification appartient à l'utilisateur
         if ($notification->user_id !== auth()->id()) {
             abort(403, 'Vous n\'êtes pas autorisé à supprimer cette notification');
         }
 
         $notification->delete();
+        cache()->forget('notif_count_' . auth()->id());
 
         return back()->with('success', 'Notification supprimée avec succès');
     }
@@ -69,13 +71,14 @@ class NotificationController extends Controller
      */
     public function nombreNonLues()
     {
-        $nombre = Notification::where('user_id', auth()->id())
-            ->where('lu', false)
-            ->count();
+        $userId = auth()->id();
+        $nombre = cache()->remember(
+            'notif_count_' . $userId,
+            30,
+            fn () => Notification::where('user_id', $userId)->where('lu', false)->count()
+        );
 
-        return response()->json([
-            'nombre' => $nombre
-        ]);
+        return response()->json(['nombre' => $nombre]);
     }
 
     public function derniereNonLue()

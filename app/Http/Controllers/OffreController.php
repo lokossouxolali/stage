@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Offre;
-use App\Models\Entreprise;
+use App\Jobs\NotifierEtudiantsNouvelleOffre;
 use App\Models\Candidature;
-use App\Models\Notification;
+use App\Models\Entreprise;
+use App\Models\Offre;
 use App\Models\User;
-use App\Mail\OffrePubliee;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class OffreController extends Controller
@@ -220,26 +218,6 @@ class OffreController extends Controller
 
     private function notifierPublication(Offre $offre): void
     {
-        $offre->load('entreprise');
-
-        User::whereIn('role', [User::ROLE_ETUDIANT, User::ROLE_ADMIN, User::ROLE_LEGACY_ADMIN, User::ROLE_SUPER_ADMIN])
-            ->where('est_actif', true)
-            ->chunkById(100, function ($users) use ($offre) {
-                foreach ($users as $user) {
-                    Notification::create([
-                        'user_id' => $user->id,
-                        'type' => 'offre_publiee',
-                        'titre' => 'Nouvelle offre de stage publiée',
-                        'message' => 'Une nouvelle offre de stage "' . $offre->titre . '" a été publiée par ' . ($offre->entreprise->nom ?? 'une entreprise') . '.',
-                        'lien' => route('offres.show', $offre),
-                    ]);
-
-                    try {
-                        Mail::to($user->email)->send(new OffrePubliee($offre, $user));
-                    } catch (\Exception $e) {
-                        \Log::error('Erreur lors de l\'envoi de l\'email d\'offre publiée : ' . $e->getMessage());
-                    }
-                }
-            });
+        NotifierEtudiantsNouvelleOffre::dispatch($offre);
     }
 }

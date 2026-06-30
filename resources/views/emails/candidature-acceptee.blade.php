@@ -50,9 +50,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    {{-- <div class="header">
         <h1>🎉 Félicitations !</h1>
-    </div>
+    </div> --}}
     
     <div class="content">
         <p>Bonjour {{ $candidature->etudiant->name }},</p>

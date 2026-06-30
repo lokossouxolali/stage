@@ -5,28 +5,24 @@
 
 @section('content')
 <div class="row">
-    <div class="col-lg-8">
+    <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-briefcase me-2"></i>
                     {{ $offre->titre }}
                 </h5>
-                <div>
-                    @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())
-                        <a href="{{ route('offres.edit', $offre) }}" class="btn btn-warning btn-sm">
-                            <i class="fas fa-edit me-1"></i>
-                            Modifier
-                        </a>
-                    @endif
-                </div>
+                @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())
+                    <a href="{{ route('offres.edit', $offre) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i>Modifier
+                    </a>
+                @endif
             </div>
             <div class="card-body">
-                <!-- Informations principales -->
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <h6 class="text-muted mb-3">Informations générales</h6>
-                        
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Entreprise</label>
                             <p class="form-control-plaintext">
@@ -40,22 +36,17 @@
                                 @endif
                             </p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Type de stage</label>
-                            <p class="form-control-plaintext">
-                                <span class="badge bg-info fs-6">{{ $offre->type_stage }}</span>
-                            </p>
+                            <p class="form-control-plaintext">{{ $offre->type_stage }}</p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Durée</label>
-                            <p class="form-control-plaintext">
-                                <i class="fas fa-calendar-alt me-2 text-muted"></i>
-                                {{ $offre->duree }} mois
-                            </p>
+                            <p class="form-control-plaintext">{{ $offre->duree }} mois</p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Niveau requis</label>
                             <p class="form-control-plaintext">
@@ -63,32 +54,17 @@
                             </p>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <h6 class="text-muted mb-3">Détails pratiques</h6>
-                        
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Statut</label>
                             <p class="form-control-plaintext">
-                                @if($offre->statut === 'active')
-                                    <span class="badge bg-success fs-6">
-                                        <i class="fas fa-check me-1"></i>
-                                        Active
-                                    </span>
-                                @elseif($offre->statut === 'inactive')
-                                    <span class="badge bg-secondary fs-6">
-                                        <i class="fas fa-pause me-1"></i>
-                                        Inactive
-                                    </span>
-                                @else
-                                    <span class="badge bg-warning fs-6">
-                                        <i class="fas fa-clock me-1"></i>
-                                        En attente
-                                    </span>
-                                @endif
+                                {{ $offre->statut === 'active' ? 'Active' : ($offre->statut === 'inactive' ? 'Inactive' : 'En attente') }}
                             </p>
                         </div>
-                        
+
                         @if($offre->date_debut)
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Date de début</label>
@@ -98,7 +74,7 @@
                                 </p>
                             </div>
                         @endif
-                        
+
                         @if($offre->date_fin)
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Date de fin</label>
@@ -108,7 +84,7 @@
                                 </p>
                             </div>
                         @endif
-                        
+
                         @if($offre->lieu)
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Lieu de travail</label>
@@ -118,8 +94,7 @@
                                 </p>
                             </div>
                         @endif
-                        
-                        
+
                         @if($offre->date_limite_candidature)
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Date limite candidature</label>
@@ -131,7 +106,7 @@
                         @endif
                     </div>
                 </div>
-                
+
                 <!-- Description -->
                 <div class="mb-4">
                     <h6 class="text-muted mb-3">Description du poste</h6>
@@ -141,7 +116,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Missions -->
                 @if($offre->missions)
                     <div class="mb-4">
@@ -153,7 +128,7 @@
                         </div>
                     </div>
                 @endif
-                
+
                 <!-- Compétences requises -->
                 @if($offre->competences_requises)
                     <div class="mb-4">
@@ -165,77 +140,29 @@
                         </div>
                     </div>
                 @endif
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4">
-        <!-- Actions -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-bolt me-2"></i>
-                    Actions
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    @if(auth()->user()->isEtudiant() && $offre->statut === 'active')
+
+                <!-- Bouton Postuler en bas -->
+                @if(auth()->user()->isEtudiant() && $offre->statut === 'active')
+                    <div class="d-flex justify-content-end pt-3 border-top">
                         @if($candidatureExistante)
-                            <a href="{{ route('candidatures.show', $candidatureExistante) }}"
-                               class="btn btn-outline-success">
-                                <i class="fas fa-check me-2"></i>
-                                Candidature déjà envoyée
+                            <a href="{{ route('candidatures.show', $candidatureExistante) }}" class="btn btn-outline-success">
+                                <i class="fas fa-check me-2"></i>Candidature déjà envoyée
                             </a>
                         @else
-                            <a href="{{ route('candidatures.create', $offre) }}"
-                               class="btn btn-success">
-                                <i class="fas fa-paper-plane me-2"></i>
-                                Postuler à cette offre
+                            <a href="{{ route('candidatures.create', $offre) }}" class="btn" style="background-color:#0b1f4d;color:#fff;">
+                                <i class="fas fa-paper-plane me-2"></i>Postuler à cette offre
                             </a>
                         @endif
-                    @endif
-                    
-                    @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())
-                        <a href="{{ route('candidatures.index', ['offre_id' => $offre->id]) }}" 
-                           class="btn btn-outline-primary">
-                            <i class="fas fa-users me-2"></i>
-                            Voir les candidatures
-                        </a>
-                    @endif
-                    
-                    @if($offre->entreprise)
-                        <a href="{{ route('entreprises.show', $offre->entreprise) }}" 
-                           class="btn btn-outline-info">
-                            <i class="fas fa-building me-2"></i>
-                            Voir l'entreprise
-                        </a>
-                    @endif
-                </div>
-            </div>
-        </div>
-        
-        <!-- Statistiques -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    Statistiques
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="border-end">
-                            <h4 class="text-primary">{{ $offre->candidatures->count() }}</h4>
-                            <small class="text-muted">Candidatures</small>
-                        </div>
                     </div>
-                    <div class="col-6">
-                        <h4 class="text-success">{{ $offre->nombre_places }}</h4>
-                        <small class="text-muted">Places disponibles</small>
+                @endif
+
+                @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())
+                    <div class="d-flex justify-content-end pt-3 border-top">
+                        <a href="{{ route('candidatures.index', ['offre_id' => $offre->id]) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-users me-2"></i>Voir les candidatures
+                        </a>
                     </div>
-                </div>
+                @endif
             </div>
         </div>
     </div>

@@ -155,7 +155,15 @@
                             <div>{{ $user->email }}</div>
                             <div class="text-muted small">{{ $user->telephone ?: 'Telephone non renseigne' }}</div>
                         </td>
-                        <td><span class="badge-soft {{ $role['class'] }}">{{ $role['label'] }}</span></td>
+                        <td>
+                            @php
+                                $words = explode(' ', $role['label']);
+                                $roleDisplay = count($words) > 1
+                                    ? collect($words)->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode('.')
+                                    : $role['label'];
+                            @endphp
+                            <span class="badge-soft {{ $role['class'] }}" title="{{ $role['label'] }}">{{ $roleDisplay }}</span>
+                        </td>
                         <td><span class="badge-soft {{ $registrationClass }}">{{ str_replace('_', ' ', ucfirst($user->statut_inscription ?? 'valide')) }}</span></td>
                         <td>
                             @if($user->est_actif)

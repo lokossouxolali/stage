@@ -50,10 +50,10 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    {{-- <div class="header">
         <h1>Réponse à votre candidature</h1>
     </div>
-    
+     --}}
     <div class="content">
         <p>Bonjour {{ $candidature->etudiant->name }},</p>
         
