@@ -3,7 +3,8 @@
 namespace Tests\Feature;
 
 use App\Mail\OtpCodeMail;
-use App\Models\RegistrationToken;
+use App\Models\Filiere;
+use App\Models\Specialite;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -26,24 +27,19 @@ class ApiAuthTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'message',
-                    'user',
-                    'token',
-                    'token_type'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'user',
+                'token',
+                'token_type',
+            ]);
     }
 
     public function test_user_can_register(): void
     {
         Mail::fake();
-
-        $plainToken = 'ETUDIANT-TEST-TOKEN';
-        RegistrationToken::create([
-            'token_hash' => RegistrationToken::hashToken($plainToken),
-            'role' => 'etudiant',
-        ]);
+        $filiere = Filiere::create(['nom' => 'Informatique']);
 
         $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
@@ -51,19 +47,21 @@ class ApiAuthTest extends TestCase
             'password' => 'password',
             'password_confirmation' => 'password',
             'role' => 'etudiant',
-            'registration_token' => $plainToken,
+            'niveau_etude' => 'L3',
+            'filiere_id' => $filiere->id,
         ]);
 
         $response->assertStatus(202)
-                ->assertJsonStructure([
-                    'success',
-                    'message',
-                    'pending_registration_id'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'pending_registration_id',
+            ]);
 
         $otp = null;
         Mail::assertSent(OtpCodeMail::class, function ($mail) use (&$otp) {
             $otp = $mail->code;
+
             return true;
         });
 
@@ -73,16 +71,57 @@ class ApiAuthTest extends TestCase
         ]);
 
         $verifyResponse->assertStatus(201)
-                ->assertJsonStructure([
-                    'success',
-                    'message',
-                    'user'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'user',
+            ]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
+            'filiere_id' => $filiere->id,
             'statut_inscription' => 'en_attente',
             'est_actif' => false,
+        ]);
+    }
+
+    public function test_teacher_registration_requires_and_stores_a_specialite(): void
+    {
+        Mail::fake();
+
+        $this->postJson('/api/auth/register', [
+            'name' => 'Enseignant Test',
+            'email' => 'enseignant@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => 'enseignant',
+        ])->assertUnprocessable()->assertJsonValidationErrors('specialite_id');
+
+        $specialite = Specialite::create(['nom' => 'Génie logiciel']);
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Enseignant Test',
+            'email' => 'enseignant@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => 'enseignant',
+            'specialite_id' => $specialite->id,
+        ])->assertAccepted();
+
+        $otp = null;
+        Mail::assertSent(OtpCodeMail::class, function (OtpCodeMail $mail) use (&$otp): bool {
+            $otp = $mail->code;
+
+            return true;
+        });
+
+        $this->postJson('/api/auth/register/verify', [
+            'pending_registration_id' => $response->json('pending_registration_id'),
+            'otp_code' => $otp,
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'enseignant@example.com',
+            'specialite_id' => $specialite->id,
         ]);
     }
 
@@ -101,9 +140,9 @@ class ApiAuthTest extends TestCase
         ]);
 
         $response->assertStatus(403)
-                ->assertJson([
-                    'success' => false,
-                ]);
+            ->assertJson([
+                'success' => false,
+            ]);
     }
 
     public function test_user_can_logout(): void
@@ -112,7 +151,7 @@ class ApiAuthTest extends TestCase
         $token = $user->createToken('test-token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/auth/logout');
 
         $response->assertStatus(200);
@@ -124,13 +163,13 @@ class ApiAuthTest extends TestCase
         $token = $user->createToken('test-token')->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/auth/user');
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'user'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'user',
+            ]);
     }
 }

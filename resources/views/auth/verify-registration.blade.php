@@ -26,7 +26,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary w-100">
-                <i class="fas fa-check me-2"></i>Valider mon inscription
+                <i class="fas fa-check me-2"></i>Verifier mon email
             </button>
         </form>
 

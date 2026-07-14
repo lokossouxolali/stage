@@ -12,7 +12,6 @@ class PendingRegistration extends Model
     protected $fillable = [
         'email',
         'payload',
-        'registration_token_id',
         'otp_hash',
         'otp_expires_at',
         'consumed_at',
@@ -27,8 +26,4 @@ class PendingRegistration extends Model
         ];
     }
 
-    public function registrationToken()
-    {
-        return $this->belongsTo(RegistrationToken::class);
-    }
 }

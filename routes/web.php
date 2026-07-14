@@ -9,7 +9,8 @@ use App\Http\Controllers\CandidatureController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PropositionThemeController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\RegistrationTokenController;
+use App\Http\Controllers\FiliereController;
+use App\Http\Controllers\SpecialiteController;
 
 // Route d'accueil
 Route::get('/', function () {
@@ -74,13 +75,12 @@ Route::middleware('auth')->group(function () {
     
     // Routes pour les utilisateurs (admin seulement)
     Route::middleware('role:admin')->group(function () {
+        Route::resource('filieres', FiliereController::class)->except('show');
+        Route::resource('specialites', SpecialiteController::class)->except('show');
         Route::resource('users', UserController::class);
         Route::patch('/users/{user}/valider-inscription', [UserController::class, 'validerInscription'])->name('users.valider-inscription');
         Route::patch('/users/{user}/refuser-inscription', [UserController::class, 'refuserInscription'])->name('users.refuser-inscription');
         Route::post('/users/export', [UserController::class, 'export'])->name('users.export');
-        Route::get('/registration-tokens', [RegistrationTokenController::class, 'index'])->name('registration-tokens.index');
-        Route::post('/registration-tokens', [RegistrationTokenController::class, 'store'])->name('registration-tokens.store');
-        Route::get('/registration-tokens/export', [RegistrationTokenController::class, 'export'])->name('registration-tokens.export');
     });
     
     // Routes spécifiques pour les entreprises

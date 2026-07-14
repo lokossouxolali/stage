@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Mail\InscriptionEnAttente;
 use App\Mail\OtpCodeMail;
+use App\Models\Filiere;
 use App\Models\Notification;
 use App\Models\PendingRegistration;
-use App\Models\RegistrationToken;
+use App\Models\Specialite;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,14 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    public function registrationOptions()
+    {
+        return response()->json([
+            'filieres' => Filiere::query()->orderBy('nom')->get(['id', 'nom', 'code']),
+            'specialites' => Specialite::query()->orderBy('nom')->get(['id', 'nom', 'code']),
+        ]);
+    }
+
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -33,7 +42,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (! Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'success' => false,
                 'message' => 'Identifiants incorrects',
@@ -42,7 +51,7 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        if ($user->statut_inscription !== 'valide' || !$user->est_actif) {
+        if ($user->statut_inscription !== 'valide' || ! $user->est_actif) {
             Auth::logout();
 
             return response()->json([
@@ -69,10 +78,10 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Password::defaults()],
             'role' => 'required|in:enseignant,etudiant,entreprise',
-            'registration_token' => 'required|string|max:255',
             'telephone' => 'nullable|string|max:20',
-            'niveau_etude' => 'nullable|string|max:50',
-            'filiere' => 'nullable|string|max:100',
+            'niveau_etude' => 'required_if:role,etudiant|nullable|in:L1,L2,L3,M1,M2',
+            'filiere_id' => 'required_if:role,etudiant|nullable|integer|exists:filieres,id',
+            'specialite_id' => 'required_if:role,enseignant|nullable|integer|exists:specialites,id',
         ]);
 
         if ($validator->fails()) {
@@ -83,20 +92,8 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $registrationToken = RegistrationToken::where('token_hash', RegistrationToken::hashToken($request->registration_token))
-            ->where('role', $request->role)
-            ->whereNull('used_at')
-            ->first();
-
-        if (!$registrationToken) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Token invalide, deja utilise ou non compatible avec ce type de compte.',
-            ], 422);
-        }
-
         $otp = (string) random_int(100000, 999999);
-        $payload = $request->except(['password_confirmation', 'registration_token']);
+        $payload = $request->except(['password_confirmation']);
         $payload['password'] = Hash::make($request->password);
 
         PendingRegistration::where('email', $request->email)->whereNull('consumed_at')->delete();
@@ -104,7 +101,6 @@ class AuthController extends Controller
         $pending = PendingRegistration::create([
             'email' => $request->email,
             'payload' => $payload,
-            'registration_token_id' => $registrationToken->id,
             'otp_hash' => Hash::make($otp),
             'otp_expires_at' => now()->addMinutes(5),
         ]);
@@ -112,7 +108,7 @@ class AuthController extends Controller
         try {
             Mail::to($request->email)->send(new OtpCodeMail($otp, 'votre inscription'));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi du OTP d\'inscription (API) : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi du OTP d\'inscription (API) : '.$e->getMessage());
 
             $pending->delete();
 
@@ -144,26 +140,19 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $pending = PendingRegistration::with('registrationToken')->find($request->pending_registration_id);
+        $pending = PendingRegistration::find($request->pending_registration_id);
 
-        if (!$pending || $pending->consumed_at || $pending->otp_expires_at->isPast()) {
+        if (! $pending || $pending->consumed_at || $pending->otp_expires_at->isPast()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Demande expiree ou deja utilisee.',
             ], 422);
         }
 
-        if (!Hash::check($request->otp_code, $pending->otp_hash)) {
+        if (! Hash::check($request->otp_code, $pending->otp_hash)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Code OTP incorrect.',
-            ], 422);
-        }
-
-        if ($pending->registrationToken->isUsed()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ce token a deja ete utilise.',
             ], 422);
         }
 
@@ -175,14 +164,10 @@ class AuthController extends Controller
             'role' => $payload['role'],
             'telephone' => $payload['telephone'] ?? null,
             'niveau_etude' => $payload['niveau_etude'] ?? null,
-            'filiere' => $payload['filiere'] ?? null,
+            'filiere_id' => $payload['filiere_id'] ?? null,
+            'specialite_id' => $payload['specialite_id'] ?? null,
             'statut_inscription' => 'en_attente',
             'est_actif' => false,
-        ]);
-
-        $pending->registrationToken->update([
-            'used_by' => $user->id,
-            'used_at' => now(),
         ]);
 
         $pending->update(['consumed_at' => now()]);
@@ -190,7 +175,7 @@ class AuthController extends Controller
         try {
             Mail::to($user->email)->send(new InscriptionEnAttente($user));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi de l\'email d\'inscription en attente (API) : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi de l\'email d\'inscription en attente (API) : '.$e->getMessage());
         }
 
         $admins = User::whereIn('role', User::administrativeRoles())->where('est_actif', true)->get();
@@ -199,7 +184,7 @@ class AuthController extends Controller
                 'user_id' => $admin->id,
                 'type' => 'nouvelle_inscription',
                 'titre' => 'Nouvelle inscription en attente',
-                'message' => $user->name . ' (' . $user->email . ') a soumis une demande d\'inscription en tant que ' . ucfirst($user->role) . '.',
+                'message' => $user->name.' ('.$user->email.') a soumis une demande d\'inscription en tant que '.ucfirst($user->role).'.',
                 'lien' => route('users.index'),
             ]);
         }
@@ -225,7 +210,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'user' => $request->user()->load(['entreprise']),
+            'user' => $request->user()->load(['entreprise', 'filiere', 'specialite']),
         ]);
     }
 }

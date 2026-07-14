@@ -40,7 +40,7 @@
                                 @break
                             @case('responsable_pedagogique')
                             @case('admin')
-                                <span class="badge bg-warning fs-6">Responsable Pedagogique</span>
+                                <span class="badge bg-warning fs-6">Chef de Département</span>
                                 @break
                             @case('etudiant')
                                 <span class="badge bg-primary fs-6">Étudiant</span>

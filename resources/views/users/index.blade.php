@@ -7,8 +7,8 @@
 @php
     $roleBadges = [
         'super_admin' => ['label' => 'Super Administrateur', 'class' => 'badge-soft-danger'],
-        'responsable_pedagogique' => ['label' => 'Responsable Pedagogique', 'class' => 'badge-soft-warning'],
-        'admin' => ['label' => 'Responsable Pedagogique', 'class' => 'badge-soft-warning'],
+        'responsable_pedagogique' => ['label' => 'Chef de Département', 'class' => 'badge-soft-warning'],
+        'admin' => ['label' => 'Chef de Département', 'class' => 'badge-soft-warning'],
         'etudiant' => ['label' => 'Etudiant', 'class' => 'badge-soft-primary'],
         'entreprise' => ['label' => 'Entreprise', 'class' => 'badge-soft-info'],
         'enseignant' => ['label' => 'Enseignant', 'class' => 'badge-soft-secondary'],

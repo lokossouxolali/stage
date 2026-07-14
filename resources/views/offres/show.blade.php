@@ -43,6 +43,14 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label fw-bold">Domaine / Filière concernée</label>
+                            <p class="form-control-plaintext">
+                                <i class="fas fa-graduation-cap me-2 text-muted"></i>
+                                {{ $offre->filiere?->nom ?? 'Non renseignée' }}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label fw-bold">Durée</label>
                             <p class="form-control-plaintext">{{ $offre->duree }} mois</p>
                         </div>
@@ -203,7 +211,7 @@
                                             <div>
                                                 <div class="fw-bold">{{ $candidature->etudiant->name }}</div>
                                                 @if($candidature->etudiant->filiere)
-                                                    <small class="text-muted">{{ $candidature->etudiant->filiere }}</small>
+                                                    <small class="text-muted">{{ $candidature->etudiant->filiere->nom }}</small>
                                                 @endif
                                             </div>
                                         </div>

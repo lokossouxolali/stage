@@ -91,7 +91,7 @@
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Filière</label>
-                                    <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->filiere ?? 'Non renseigné' }}</p>
+                                    <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->filiere?->nom ?? 'Non renseigné' }}</p>
                                 </div>
                                 <div class="col-sm-12">
                                     <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Directeur de mémoire</label>
@@ -126,6 +126,11 @@
                                             Aucun directeur de mémoire sélectionné
                                         </p>
                                     @endif
+                                </div>
+                            @elseif(auth()->user()->isEnseignant())
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Spécialité / Département</label>
+                                    <p class="mb-0" style="font-size: 0.85rem; color: #081a3d;">{{ auth()->user()->specialite?->nom ?? 'Non renseigné' }}</p>
                                 </div>
                             @endif
                         </div>

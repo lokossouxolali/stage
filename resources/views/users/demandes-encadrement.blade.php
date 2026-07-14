@@ -61,7 +61,7 @@
                                                 @if($etudiant->filiere)
                                                     <p class="text-muted small mb-0">
                                                         <i class="fas fa-book me-1" style="color: #0b1f4d;"></i>
-                                                        Filière : {{ $etudiant->filiere }}
+                                                        Filière : {{ $etudiant->filiere->nom }}
                                                     </p>
                                                 @endif
                                             </div>
@@ -145,4 +145,3 @@
     </div>
 </div>
 @endsection
-

@@ -2,8 +2,8 @@
     $user = auth()->user();
     $roleLabels = [
         'super_admin' => 'Super Administrateur',
-        'responsable_pedagogique' => 'Responsable Pedagogique',
-        'admin' => 'Responsable Pedagogique',
+        'responsable_pedagogique' => 'Chef de Département',
+        'admin' => 'Chef de Département',
         'etudiant' => 'Etudiant',
         'entreprise' => 'Entreprise',
         'enseignant' => 'Enseignant',
@@ -39,17 +39,20 @@
             </a>
             @if($user->isSuperAdmin())
                 <a class="nav-link {{ request()->routeIs('users.index') && request('role') === 'responsable_pedagogique' ? 'active' : '' }}" href="{{ route('users.index', ['role' => 'responsable_pedagogique']) }}">
-                    <i class="fas fa-user-shield"></i><span>Resp. Pédagogiques</span>
+                    <i class="fas fa-user-shield"></i><span>Chefs de Département</span>
                 </a>
                 <a class="nav-link {{ request()->routeIs('users.create') && request('role') === 'responsable_pedagogique' ? 'active' : '' }}" href="{{ route('users.create', ['role' => 'responsable_pedagogique']) }}">
-                    <i class="fas fa-user-plus"></i><span>Ajouter Resp. Péda.</span>
+                    <i class="fas fa-user-plus"></i><span>Ajouter un Chef</span>
                 </a>
             @endif
-            <a class="nav-link {{ request()->routeIs('registration-tokens.*') ? 'active' : '' }}" href="{{ route('registration-tokens.index') }}">
-                <i class="fas fa-ticket-alt"></i><span>Tokens inscription</span>
-            </a>
             <a class="nav-link {{ request()->routeIs('entreprises.*') ? 'active' : '' }}" href="{{ route('entreprises.index') }}">
                 <i class="fas fa-building"></i><span>Entreprises</span>
+            </a>
+            <a class="nav-link {{ request()->routeIs('filieres.*') ? 'active' : '' }}" href="{{ route('filieres.index') }}">
+                <i class="fas fa-graduation-cap"></i><span>Filières</span>
+            </a>
+            <a class="nav-link {{ request()->routeIs('specialites.*') ? 'active' : '' }}" href="{{ route('specialites.index') }}">
+                <i class="fas fa-sitemap"></i><span>Spécialités / Départements</span>
             </a>
             <a class="nav-link {{ request()->routeIs('statistiques') ? 'active' : '' }}" href="{{ route('statistiques') }}">
                 <i class="fas fa-chart-pie"></i><span>Statistiques</span>

@@ -19,6 +19,22 @@
                     @method('PATCH')
                     
                     <div class="mb-3">
+                        <label for="filiere_id" class="form-label">Domaine / Filière concernée *</label>
+                        <select class="form-select @error('filiere_id') is-invalid @enderror" id="filiere_id" name="filiere_id" required>
+                            <option value="">Sélectionnez le domaine de l'offre</option>
+                            @foreach($filieres as $filiere)
+                                <option value="{{ $filiere->id }}" @selected((string) old('filiere_id', $offre->filiere_id) === (string) $filiere->id)>
+                                    {{ $filiere->nom }}@if($filiere->code) ({{ $filiere->code }})@endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Seuls les étudiants inscrits dans cette filière recevront la notification.</div>
+                        @error('filiere_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="titre" class="form-label">Titre de l'offre *</label>
                         <div class="input-group">
                             <span class="input-group-text">

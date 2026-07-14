@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->string('email')->index();
             $table->json('payload');
-            $table->foreignId('registration_token_id')->constrained()->cascadeOnDelete();
             $table->string('otp_hash');
             $table->timestamp('otp_expires_at');
             $table->timestamp('consumed_at')->nullable();

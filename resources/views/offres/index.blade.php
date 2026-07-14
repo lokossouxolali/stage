@@ -23,7 +23,7 @@
                 <!-- Filtres -->
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par titre, entreprise...">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Rechercher par titre, entreprise, domaine...">
                     </div>
                     <div class="col-md-2">
                         <select class="form-select" id="typeFilter">
@@ -67,6 +67,7 @@
                             <tr>
                                 <th>Titre</th>
                                 <th>Entreprise</th>
+                                <th>Domaine</th>
                                 <th>Type</th>
                                 <th>Durée</th>
                                 <th>Niveau</th>
@@ -92,6 +93,7 @@
                                             </div>
                                         </div>
                                     </td>
+                                    <td>{{ $offre->filiere?->nom ?? '—' }}</td>
                                     <td>
                                         <span class="badge bg-info">{{ $offre->type_stage }}</span>
                                     </td>
@@ -156,7 +158,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">
+                                    <td colspan="8" class="text-center py-4">
                                         <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">Aucune offre de stage trouvée</p>
                                         @if(auth()->user()->isEntreprise() || auth()->user()->isAdmin())
@@ -247,11 +249,12 @@ function filterTable() {
         
         const titre = cells[0].textContent.toLowerCase();
         const entreprise = cells[1].textContent.toLowerCase();
-        const type = cells[2].textContent;
-        const niveau = cells[4].textContent;
-        const statut = cells[5].textContent;
+        const domaine = cells[2].textContent.toLowerCase();
+        const type = cells[3].textContent;
+        const niveau = cells[5].textContent;
+        const statut = cells[6].textContent;
         
-        const matchesSearch = titre.includes(searchTerm) || entreprise.includes(searchTerm);
+        const matchesSearch = titre.includes(searchTerm) || entreprise.includes(searchTerm) || domaine.includes(searchTerm);
         const matchesType = !typeFilter || type.includes(typeFilter);
         const matchesNiveau = !niveauFilter || niveau.includes(niveauFilter);
         const matchesStatut = !statutFilter || 

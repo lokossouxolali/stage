@@ -67,7 +67,7 @@
                 <p><strong>Niveau :</strong> {{ $candidature->etudiant->niveau_etude }}</p>
             @endif
             @if($candidature->etudiant->filiere)
-                <p><strong>Filière :</strong> {{ $candidature->etudiant->filiere }}</p>
+                <p><strong>Filière :</strong> {{ $candidature->etudiant->filiere->nom }}</p>
             @endif
         </div>
         
@@ -91,5 +91,4 @@
     </div>
 </body>
 </html>
-
 

@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\OffreController;
 */
 
 Route::prefix('auth')->group(function () {
+    Route::get('/registration-options', [AuthController::class, 'registrationOptions']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/register/verify', [AuthController::class, 'verifyRegister']);

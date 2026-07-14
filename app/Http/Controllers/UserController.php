@@ -2,26 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
+use App\Mail\DemandeDirecteurMemoire;
+use App\Mail\InscriptionRefusee;
+use App\Mail\InscriptionValidee;
+use App\Mail\OtpCodeMail;
+use App\Mail\ReponseDirecteurMemoire;
 use App\Models\Notification;
 use App\Models\PasswordChangeOtp;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use App\Mail\InscriptionValidee;
-use App\Mail\InscriptionRefusee;
-use App\Mail\DemandeDirecteurMemoire;
-use App\Mail\ReponseDirecteurMemoire;
-use App\Mail\OtpCodeMail;
-use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class UserController extends Controller
 {
@@ -112,7 +111,7 @@ class UserController extends Controller
 
     public function photo(User $user)
     {
-        if (!$user->photo_path || !Storage::disk('public')->exists($user->photo_path)) {
+        if (! $user->photo_path || ! Storage::disk('public')->exists($user->photo_path)) {
             abort(404);
         }
 
@@ -121,7 +120,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
             abort(403, 'Seul le Super Administrateur peut gerer un compte Super Administrateur.');
         }
 
@@ -132,19 +131,19 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
             abort(403, 'Seul le Super Administrateur peut gerer un compte Super Administrateur.');
         }
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'role' => ['required', Rule::in(array_keys($this->assignableRoleLabels($user)))],
             'est_actif' => 'nullable|boolean',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        if (!auth()->user()->isSuperAdmin() && $request->role !== $user->role) {
+        if (! auth()->user()->isSuperAdmin() && $request->role !== $user->role) {
             abort(403, 'Seul le Super Administrateur peut modifier le role d\'un utilisateur.');
         }
 
@@ -170,7 +169,7 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        if ($user->isSuperAdmin() && !auth()->user()->isSuperAdmin()) {
+        if ($user->isSuperAdmin() && ! auth()->user()->isSuperAdmin()) {
             abort(403, 'Seul le Super Administrateur peut supprimer un autre Super Administrateur.');
         }
 
@@ -187,22 +186,24 @@ class UserController extends Controller
     public function profile()
     {
         $user = auth()->user();
+
         return view('profile.show', compact('user'));
     }
 
     public function editProfile()
     {
         $user = auth()->user();
+
         return view('profile.edit', compact('user'));
     }
 
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
-        
+
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'telephone' => 'nullable|string|max:20',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -246,7 +247,7 @@ class UserController extends Controller
                 ->latest()
                 ->first();
 
-            if (!$otp) {
+            if (! $otp) {
                 return back()->withErrors(['otp_code' => 'Aucune demande de changement de mot de passe en attente.']);
             }
 
@@ -254,7 +255,7 @@ class UserController extends Controller
                 return back()->withErrors(['otp_code' => 'Le code OTP a expire. Veuillez recommencer.']);
             }
 
-            if (!Hash::check($request->otp_code, $otp->otp_hash)) {
+            if (! Hash::check($request->otp_code, $otp->otp_hash)) {
                 return back()
                     ->withErrors(['otp_code' => 'Code OTP incorrect.'])
                     ->with('password_change_pending', true);
@@ -272,7 +273,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Le mot de passe actuel est incorrect']);
         }
 
@@ -289,7 +290,7 @@ class UserController extends Controller
         try {
             Mail::to($user->email)->send(new OtpCodeMail($otpCode, 'le changement de votre mot de passe'));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi du OTP de mot de passe : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi du OTP de mot de passe : '.$e->getMessage());
         }
 
         return back()
@@ -304,7 +305,7 @@ class UserController extends Controller
             ->orWhere('email', 'like', "%{$query}%")
             ->limit(10)
             ->get(['id', 'name', 'email']);
-        
+
         return response()->json($users);
     }
 
@@ -323,7 +324,7 @@ class UserController extends Controller
         $emailEnvoye = $this->sendMailSafely(fn () => Mail::to($user->email)->send(new InscriptionValidee($user)), 'email de validation');
 
         return back()->with('success', $emailEnvoye
-            ? 'Inscription validée avec succès. Un email de confirmation a été envoyé à ' . $user->email
+            ? 'Inscription validée avec succès. Un email de confirmation a été envoyé à '.$user->email
             : 'Inscription validée avec succès. Note : L\'envoi de l\'email a échoué, mais l\'utilisateur a été notifié dans l\'application.');
     }
 
@@ -342,7 +343,7 @@ class UserController extends Controller
         $emailEnvoye = $this->sendMailSafely(fn () => Mail::to($user->email)->send(new InscriptionRefusee($user)), 'email de refus');
 
         return back()->with('success', $emailEnvoye
-            ? 'Inscription refusée. Un email de notification a été envoyé à ' . $user->email
+            ? 'Inscription refusée. Un email de notification a été envoyé à '.$user->email
             : 'Inscription refusée. Note : L\'envoi de l\'email a échoué, mais l\'utilisateur a été notifié dans l\'application.');
     }
 
@@ -353,15 +354,15 @@ class UserController extends Controller
         ]);
 
         $user = auth()->user();
-        
+
         // Vérifier que l'utilisateur est un étudiant
-        if (!$user->isEtudiant()) {
+        if (! $user->isEtudiant()) {
             return back()->with('error', 'Seuls les étudiants peuvent choisir un directeur de mémoire');
         }
 
         // Vérifier que le directeur choisi est un enseignant
         $directeur = User::findOrFail($request->directeur_memoire_id);
-        if (!$directeur->isEnseignant()) {
+        if (! $directeur->isEnseignant()) {
             return back()->with('error', 'Le directeur de mémoire doit être un enseignant');
         }
 
@@ -377,7 +378,7 @@ class UserController extends Controller
             'user_id' => $directeur->id,
             'type' => 'demande_encadrement',
             'titre' => 'Nouvelle demande d\'encadrement',
-            'message' => $user->name . ' (' . $user->email . ') souhaite que vous soyez son directeur de mémoire.',
+            'message' => $user->name.' ('.$user->email.') souhaite que vous soyez son directeur de mémoire.',
             'lien' => route('demandes-encadrement.index'),
         ]);
 
@@ -385,7 +386,7 @@ class UserController extends Controller
         try {
             Mail::to($directeur->email)->send(new DemandeDirecteurMemoire($user, $directeur));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi de l\'email de demande d\'encadrement : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi de l\'email de demande d\'encadrement : '.$e->getMessage());
         }
 
         return redirect()->route('profile.show')
@@ -398,8 +399,8 @@ class UserController extends Controller
     public function demandesEncadrement()
     {
         $user = auth()->user();
-        
-        if (!$user->isEnseignant()) {
+
+        if (! $user->isEnseignant()) {
             abort(403, 'Accès réservé aux enseignants');
         }
 
@@ -418,8 +419,8 @@ class UserController extends Controller
     public function accepterDemandeEncadrement(Request $request, User $etudiant)
     {
         $user = auth()->user();
-        
-        if (!$user->isEnseignant() || $etudiant->directeur_memoire_id !== $user->id) {
+
+        if (! $user->isEnseignant() || $etudiant->directeur_memoire_id !== $user->id) {
             abort(403, 'Accès non autorisé');
         }
 
@@ -436,7 +437,7 @@ class UserController extends Controller
             'user_id' => $etudiant->id,
             'type' => 'demande_encadrement_acceptee',
             'titre' => 'Demande d\'encadrement acceptée',
-            'message' => $user->name . ' a accepté votre demande d\'encadrement de mémoire.',
+            'message' => $user->name.' a accepté votre demande d\'encadrement de mémoire.',
             'lien' => route('profile.show'),
         ]);
 
@@ -444,7 +445,7 @@ class UserController extends Controller
         try {
             Mail::to($etudiant->email)->send(new ReponseDirecteurMemoire($etudiant, $user, true));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi de l\'email de réponse d\'encadrement : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi de l\'email de réponse d\'encadrement : '.$e->getMessage());
         }
 
         return back()->with('success', 'Demande d\'encadrement acceptée avec succès');
@@ -460,8 +461,8 @@ class UserController extends Controller
         ]);
 
         $user = auth()->user();
-        
-        if (!$user->isEnseignant() || $etudiant->directeur_memoire_id !== $user->id) {
+
+        if (! $user->isEnseignant() || $etudiant->directeur_memoire_id !== $user->id) {
             abort(403, 'Accès non autorisé');
         }
 
@@ -480,7 +481,7 @@ class UserController extends Controller
             'user_id' => $etudiant->id,
             'type' => 'demande_encadrement_refusee',
             'titre' => 'Demande d\'encadrement refusée',
-            'message' => $user->name . ' a refusé votre demande d\'encadrement de mémoire. Raison : ' . $request->raison,
+            'message' => $user->name.' a refusé votre demande d\'encadrement de mémoire. Raison : '.$request->raison,
             'lien' => route('profile.show'),
         ]);
 
@@ -488,7 +489,7 @@ class UserController extends Controller
         try {
             Mail::to($etudiant->email)->send(new ReponseDirecteurMemoire($etudiant, $user, false, $request->raison));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi de l\'email de réponse d\'encadrement : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi de l\'email de réponse d\'encadrement : '.$e->getMessage());
         }
 
         return back()->with('success', 'Demande d\'encadrement refusée avec succès');
@@ -523,11 +524,11 @@ class UserController extends Controller
         if ($format === 'excel') {
             // Export Excel avec PhpSpreadsheet
             $roleLabel = $request->role ? (User::roleLabels()[$request->role] ?? ucfirst($request->role)) : 'Tous';
-            $filename = 'utilisateurs_' . $roleLabel . '_' . date('Y-m-d_H-i-s') . '.xlsx';
-            
-            $spreadsheet = new Spreadsheet();
+            $filename = 'utilisateurs_'.$roleLabel.'_'.date('Y-m-d_H-i-s').'.xlsx';
+
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
-            
+
             // Titre
             $sheet->setCellValue('A1', 'Liste des Utilisateurs');
             $sheet->mergeCells('A1:L1');
@@ -535,106 +536,106 @@ class UserController extends Controller
                 'font' => ['bold' => true, 'size' => 16, 'color' => ['rgb' => '2d3748']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
             ]);
-            
+
             // Informations d'export
             $row = 2;
-            $sheet->setCellValue('A' . $row, 'Export généré le ' . now()->format('d/m/Y à H:i'));
-            $sheet->getStyle('A' . $row)->getFont()->setSize(10)->getColor()->setRGB('666666');
+            $sheet->setCellValue('A'.$row, 'Export généré le '.now()->format('d/m/Y à H:i'));
+            $sheet->getStyle('A'.$row)->getFont()->setSize(10)->getColor()->setRGB('666666');
             $row++;
-            
+
             if ($request->role) {
-                $sheet->setCellValue('A' . $row, 'Type d\'utilisateur : ' . (User::roleLabels()[$request->role] ?? ucfirst($request->role)));
-                $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+                $sheet->setCellValue('A'.$row, 'Type d\'utilisateur : '.(User::roleLabels()[$request->role] ?? ucfirst($request->role)));
+                $sheet->getStyle('A'.$row)->getFont()->setBold(true);
                 $row++;
             }
-            
+
             if ($request->statut_inscription) {
-                $sheet->setCellValue('A' . $row, 'Statut : ' . ucfirst($request->statut_inscription));
-                $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+                $sheet->setCellValue('A'.$row, 'Statut : '.ucfirst($request->statut_inscription));
+                $sheet->getStyle('A'.$row)->getFont()->setBold(true);
                 $row++;
             }
-            
+
             $row++; // Ligne vide
-            
+
             // En-têtes du tableau
             $headers = ['ID', 'Nom', 'Email', 'Téléphone', 'Rôle', 'Statut Inscription', 'Actif', 'Entreprise', 'Directeur Mémoire', 'Niveau Étude', 'Filière', 'Date de création'];
             $col = 'A';
             foreach ($headers as $header) {
-                $sheet->setCellValue($col . $row, $header);
-                $sheet->getStyle($col . $row)->applyFromArray([
+                $sheet->setCellValue($col.$row, $header);
+                $sheet->getStyle($col.$row)->applyFromArray([
                     'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => '2d3748']
+                        'startColor' => ['rgb' => '2d3748'],
                     ],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER],
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => 'FFFFFF']
-                        ]
-                    ]
+                            'color' => ['rgb' => 'FFFFFF'],
+                        ],
+                    ],
                 ]);
                 $col++;
             }
-            
+
             // Données
             $row++;
             foreach ($users as $user) {
-                $sheet->setCellValue('A' . $row, $user->id);
-                $sheet->setCellValue('B' . $row, $user->name);
-                $sheet->setCellValue('C' . $row, $user->email);
-                $sheet->setCellValue('D' . $row, $user->telephone ?? '-');
-                $sheet->setCellValue('E' . $row, $user->roleLabel());
-                $sheet->setCellValue('F' . $row, ucfirst($user->statut_inscription ?? 'valide'));
-                $sheet->setCellValue('G' . $row, $user->est_actif ? 'Oui' : 'Non');
-                $sheet->setCellValue('H' . $row, $user->entreprise ? $user->entreprise->nom : '-');
-                $sheet->setCellValue('I' . $row, $user->directeurMemoire ? $user->directeurMemoire->name : '-');
-                $sheet->setCellValue('J' . $row, $user->niveau_etude ?? '-');
-                $sheet->setCellValue('K' . $row, $user->filiere ?? '-');
-                $sheet->setCellValue('L' . $row, $user->created_at->format('d/m/Y H:i:s'));
-                
+                $sheet->setCellValue('A'.$row, $user->id);
+                $sheet->setCellValue('B'.$row, $user->name);
+                $sheet->setCellValue('C'.$row, $user->email);
+                $sheet->setCellValue('D'.$row, $user->telephone ?? '-');
+                $sheet->setCellValue('E'.$row, $user->roleLabel());
+                $sheet->setCellValue('F'.$row, ucfirst($user->statut_inscription ?? 'valide'));
+                $sheet->setCellValue('G'.$row, $user->est_actif ? 'Oui' : 'Non');
+                $sheet->setCellValue('H'.$row, $user->entreprise ? $user->entreprise->nom : '-');
+                $sheet->setCellValue('I'.$row, $user->directeurMemoire ? $user->directeurMemoire->name : '-');
+                $sheet->setCellValue('J'.$row, $user->niveau_etude ?? '-');
+                $sheet->setCellValue('K'.$row, $user->filiere?->nom ?? '-');
+                $sheet->setCellValue('L'.$row, $user->created_at->format('d/m/Y H:i:s'));
+
                 // Style alterné pour les lignes
                 $bgColor = ($row % 2 == 0) ? 'F9FAFB' : 'FFFFFF';
-                $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                $sheet->getStyle('A'.$row.':L'.$row)->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => $bgColor]
+                        'startColor' => ['rgb' => $bgColor],
                     ],
                     'borders' => [
                         'bottom' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => 'E5E7EB']
-                        ]
-                    ]
+                            'color' => ['rgb' => 'E5E7EB'],
+                        ],
+                    ],
                 ]);
-                
+
                 $row++;
             }
-            
+
             // Ajuster la largeur des colonnes
             foreach (range('A', 'L') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
-            
+
             // Pied de page
             $row++;
-            $sheet->setCellValue('A' . $row, 'Total : ' . $users->count() . ' utilisateur(s)');
-            $sheet->getStyle('A' . $row)->getFont()->setSize(9)->getColor()->setRGB('666666');
+            $sheet->setCellValue('A'.$row, 'Total : '.$users->count().' utilisateur(s)');
+            $sheet->getStyle('A'.$row)->getFont()->setSize(9)->getColor()->setRGB('666666');
             $row++;
-            $sheet->setCellValue('A' . $row, 'Gestion de Stages - Export généré automatiquement');
-            $sheet->getStyle('A' . $row)->getFont()->setSize(9)->getColor()->setRGB('666666');
-            
+            $sheet->setCellValue('A'.$row, 'Gestion de Stages - Export généré automatiquement');
+            $sheet->getStyle('A'.$row)->getFont()->setSize(9)->getColor()->setRGB('666666');
+
             $writer = new Xlsx($spreadsheet);
             $tempFile = tempnam(sys_get_temp_dir(), 'export_');
             $writer->save($tempFile);
-            
+
             return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
         } else {
             // Export PDF
             $roleLabel = $request->role ? (User::roleLabels()[$request->role] ?? ucfirst($request->role)) : 'Tous';
-            $filename = 'utilisateurs_' . $roleLabel . '_' . date('Y-m-d_H-i-s') . '.pdf';
-            
+            $filename = 'utilisateurs_'.$roleLabel.'_'.date('Y-m-d_H-i-s').'.pdf';
+
             $data = [
                 'users' => $users,
                 'role' => $request->role,
@@ -643,6 +644,7 @@ class UserController extends Controller
             ];
 
             $pdf = Pdf::loadView('users.export-pdf', $data);
+
             return $pdf->download($filename);
         }
     }
@@ -678,8 +680,8 @@ class UserController extends Controller
     public function etudiantsEncadres()
     {
         $user = auth()->user();
-        
-        if (!$user->isEnseignant()) {
+
+        if (! $user->isEnseignant()) {
             abort(403, 'Seuls les enseignants peuvent consulter leurs étudiants encadrés');
         }
 
@@ -695,9 +697,11 @@ class UserController extends Controller
     {
         try {
             $sendFn();
+
             return true;
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi du ' . $context . ' : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi du '.$context.' : '.$e->getMessage());
+
             return false;
         }
     }

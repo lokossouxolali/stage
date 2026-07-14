@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Offre;
+use App\Jobs\NotifierEtudiantsNouvelleOffre;
 use App\Models\Entreprise;
+use App\Models\Offre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -12,7 +13,7 @@ class OffreController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Offre::with(['entreprise', 'candidatures']);
+        $query = Offre::with(['entreprise', 'filiere', 'candidatures']);
 
         // Filtres
         if ($request->has('statut')) {
@@ -31,12 +32,16 @@ class OffreController extends Controller
             $query->where('entreprise_id', $request->entreprise_id);
         }
 
+        if ($request->has('filiere_id')) {
+            $query->where('filiere_id', $request->filiere_id);
+        }
+
         // Recherche par titre ou description
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('titre', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -44,7 +49,7 @@ class OffreController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $offres
+            'data' => $offres,
         ]);
     }
 
@@ -63,28 +68,30 @@ class OffreController extends Controller
             'niveau_etude' => 'nullable|in:L1,L2,L3,M1,M2,Doctorat',
             'date_limite_candidature' => 'nullable|date',
             'nombre_places' => 'required|integer|min:1',
+            'filiere_id' => 'required|integer|exists:filieres,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur de validation',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $user = $request->user();
-        
+
         // Vérifier que l'utilisateur est une entreprise
-        if (!$user->isEntreprise()) {
+        if (! $user->isEntreprise()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Seules les entreprises peuvent créer des offres'
+                'message' => 'Seules les entreprises peuvent créer des offres',
             ], 403);
         }
 
         $offre = Offre::create([
             'entreprise_id' => $user->entreprise_id,
+            'filiere_id' => $request->filiere_id,
             'titre' => $request->titre,
             'description' => $request->description,
             'missions' => $request->missions,
@@ -99,27 +106,29 @@ class OffreController extends Controller
             'nombre_places' => $request->nombre_places,
         ]);
 
+        NotifierEtudiantsNouvelleOffre::dispatch($offre);
+
         return response()->json([
             'success' => true,
             'message' => 'Offre créée avec succès',
-            'data' => $offre->load('entreprise')
+            'data' => $offre->load(['entreprise', 'filiere']),
         ], 201);
     }
 
     public function show(string $id)
     {
-        $offre = Offre::with(['entreprise', 'candidatures.etudiant'])->find($id);
+        $offre = Offre::with(['entreprise', 'filiere', 'candidatures.etudiant'])->find($id);
 
-        if (!$offre) {
+        if (! $offre) {
             return response()->json([
                 'success' => false,
-                'message' => 'Offre non trouvée'
+                'message' => 'Offre non trouvée',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $offre
+            'data' => $offre,
         ]);
     }
 
@@ -127,20 +136,20 @@ class OffreController extends Controller
     {
         $offre = Offre::find($id);
 
-        if (!$offre) {
+        if (! $offre) {
             return response()->json([
                 'success' => false,
-                'message' => 'Offre non trouvée'
+                'message' => 'Offre non trouvée',
             ], 404);
         }
 
         $user = $request->user();
 
         // Vérifier les permissions
-        if (!$user->isAdmin() && $offre->entreprise_id !== $user->entreprise_id) {
+        if (! $user->isAdmin() && $offre->entreprise_id !== $user->entreprise_id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Non autorisé'
+                'message' => 'Non autorisé',
             ], 403);
         }
 
@@ -149,27 +158,34 @@ class OffreController extends Controller
             'description' => 'sometimes|required|string',
             'statut' => 'sometimes|in:active,fermee,suspendue',
             'date_limite_candidature' => 'nullable|date',
+            'filiere_id' => 'sometimes|required|integer|exists:filieres,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur de validation',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
+
+        $wasPublished = $offre->statut === 'active';
 
         $offre->update($request->only([
             'titre', 'description', 'missions', 'competences_requises',
             'duree', 'date_debut', 'date_fin', 'lieu', 'type_stage',
             'niveau_etude', 'statut', 'date_limite_candidature',
-            'nombre_places'
+            'nombre_places', 'filiere_id',
         ]));
+
+        if (! $wasPublished && $offre->statut === 'active') {
+            NotifierEtudiantsNouvelleOffre::dispatch($offre);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Offre mise à jour avec succès',
-            'data' => $offre->load('entreprise')
+            'data' => $offre->load(['entreprise', 'filiere']),
         ]);
     }
 
@@ -177,20 +193,20 @@ class OffreController extends Controller
     {
         $offre = Offre::find($id);
 
-        if (!$offre) {
+        if (! $offre) {
             return response()->json([
                 'success' => false,
-                'message' => 'Offre non trouvée'
+                'message' => 'Offre non trouvée',
             ], 404);
         }
 
         $user = request()->user();
 
         // Vérifier les permissions
-        if (!$user->isAdmin() && $offre->entreprise_id !== $user->entreprise_id) {
+        if (! $user->isAdmin() && $offre->entreprise_id !== $user->entreprise_id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Non autorisé'
+                'message' => 'Non autorisé',
             ], 403);
         }
 
@@ -198,7 +214,7 @@ class OffreController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Offre supprimée avec succès'
+            'message' => 'Offre supprimée avec succès',
         ]);
     }
 
@@ -206,29 +222,29 @@ class OffreController extends Controller
     {
         $offre = Offre::with(['candidatures.etudiant'])->find($id);
 
-        if (!$offre) {
+        if (! $offre) {
             return response()->json([
                 'success' => false,
-                'message' => 'Offre non trouvée'
+                'message' => 'Offre non trouvée',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $offre->candidatures
+            'data' => $offre->candidatures,
         ]);
     }
 
     public function publiques()
     {
-        $offres = Offre::with(['entreprise'])
+        $offres = Offre::with(['entreprise', 'filiere'])
             ->active()
             ->disponible()
             ->paginate(15);
 
         return response()->json([
             'success' => true,
-            'data' => $offres
+            'data' => $offres,
         ]);
     }
 }

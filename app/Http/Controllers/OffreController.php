@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Jobs\NotifierEtudiantsNouvelleOffre;
 use App\Models\Candidature;
 use App\Models\Entreprise;
+use App\Models\Filiere;
 use App\Models\Offre;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -15,11 +15,11 @@ class OffreController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
+
         // Les entreprises voient toutes les offres (lecture seule)
         // Les admins voient toutes les offres
-        $offres = Offre::with('entreprise')->paginate(10);
-        
+        $offres = Offre::with(['entreprise', 'filiere'])->paginate(10);
+
         return view('offres.index', compact('offres'));
     }
 
@@ -27,26 +27,28 @@ class OffreController extends Controller
     {
         $type_stage = $this->typesStage();
         $entreprises = auth()->user()->isAdmin() ? Entreprise::orderBy('nom')->get() : collect();
-        return view('offres.create', compact('type_stage', 'entreprises'));
+        $filieres = Filiere::orderBy('nom')->get(['id', 'nom', 'code']);
+
+        return view('offres.create', compact('type_stage', 'entreprises', 'filieres'));
     }
 
     public function store(Request $request)
     {
         $user = auth()->user();
-        
+
         // Si l'utilisateur est une entreprise, forcer l'entreprise_id à son entreprise
         if ($user->isEntreprise()) {
-            if (!$user->entreprise_id) {
+            if (! $user->entreprise_id) {
                 return redirect()->back()
                     ->withInput()
                     ->withErrors(['error' => 'Votre compte entreprise n\'est pas associé à une entreprise. Veuillez contacter un responsable pedagogique.']);
             }
             $request->merge(['entreprise_id' => $user->entreprise_id]);
-        } elseif (!$user->isAdmin()) {
+        } elseif (! $user->isAdmin()) {
             abort(403, 'Seules les entreprises et les responsables pedagogiques peuvent creer des offres');
         }
-        
-        $request->validate([
+
+        $data = $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
             'missions' => 'required|string',
@@ -61,11 +63,11 @@ class OffreController extends Controller
             'date_limite_candidature' => 'nullable|date',
             'statut' => 'nullable|in:active,fermee,suspendue',
             'entreprise_id' => $user->isAdmin() ? 'required|exists:entreprises,id' : 'nullable|exists:entreprises,id',
+            'filiere_id' => 'required|integer|exists:filieres,id',
         ]);
 
         // S'assurer que l'entreprise_id est bien défini avant la création
-        $data = $request->all();
-        if (!isset($data['entreprise_id']) || !$data['entreprise_id']) {
+        if (! isset($data['entreprise_id']) || ! $data['entreprise_id']) {
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['error' => 'Erreur : l\'entreprise n\'a pas pu être identifiée.']);
@@ -85,7 +87,7 @@ class OffreController extends Controller
 
     public function show(Offre $offre)
     {
-        $offre->load('entreprise', 'candidatures');
+        $offre->load('entreprise', 'filiere', 'candidatures');
         $candidatureExistante = null;
 
         if (auth()->user()->isEtudiant()) {
@@ -100,30 +102,32 @@ class OffreController extends Controller
     public function edit(Offre $offre)
     {
         $user = auth()->user();
-        
+
         // Vérifier que l'entreprise peut modifier cette offre
         if ($user->isEntreprise() && $offre->entreprise_id !== $user->entreprise_id) {
             abort(403, 'Vous n\'êtes pas autorisé à modifier cette offre');
         }
-        
-        return view('offres.edit', compact('offre'));
+
+        $filieres = Filiere::orderBy('nom')->get(['id', 'nom', 'code']);
+
+        return view('offres.edit', compact('offre', 'filieres'));
     }
 
     public function update(Request $request, Offre $offre)
     {
         $user = auth()->user();
-        
+
         // Vérifier que l'entreprise peut modifier cette offre
         if ($user->isEntreprise() && $offre->entreprise_id !== $user->entreprise_id) {
             abort(403, 'Vous n\'êtes pas autorisé à modifier cette offre');
         }
-        
+
         // Si l'utilisateur est une entreprise, forcer l'entreprise_id à son entreprise
         if ($user->isEntreprise() && $user->entreprise_id) {
             $request->merge(['entreprise_id' => $user->entreprise_id]);
         }
-        
-        $request->validate([
+
+        $data = $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
             'missions' => 'required|string',
@@ -137,16 +141,16 @@ class OffreController extends Controller
             'lieu' => 'nullable|string|max:255',
             'date_limite_candidature' => 'nullable|date',
             'statut' => 'nullable|in:active,fermee,suspendue',
+            'filiere_id' => 'required|integer|exists:filieres,id',
         ]);
 
-        $data = $request->all();
         $data['statut'] = ($request->input('statut') === 'active') ? 'active' : 'suspendue';
 
         $wasPublished = $offre->statut === 'active';
 
         $offre->update($data);
 
-        if (!$wasPublished && $offre->statut === 'active') {
+        if (! $wasPublished && $offre->statut === 'active') {
             $this->notifierPublication($offre);
         }
 
@@ -157,12 +161,12 @@ class OffreController extends Controller
     public function destroy(Offre $offre)
     {
         $user = auth()->user();
-        
+
         // Vérifier que l'entreprise peut supprimer cette offre
         if ($user->isEntreprise() && $offre->entreprise_id !== $user->entreprise_id) {
             abort(403, 'Vous n\'êtes pas autorisé à supprimer cette offre');
         }
-        
+
         $offre->delete();
 
         return redirect()->route('offres.mes')
@@ -176,12 +180,14 @@ class OffreController extends Controller
             ->with('candidatures')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
+
         return view('offres.mes', compact('offres'));
     }
 
     public function offresDisponibles()
     {
         $offres = Offre::with('entreprise')->where('statut', 'active')->paginate(10);
+
         return view('offres.disponibles', compact('offres'));
     }
 
@@ -197,7 +203,7 @@ class OffreController extends Controller
         $offres = Offre::where('titre', 'like', "%{$query}%")
             ->orWhere('description', 'like', "%{$query}%")
             ->paginate(10);
-        
+
         return view('offres.index', compact('offres', 'query'));
     }
 
@@ -207,7 +213,7 @@ class OffreController extends Controller
         $offres = Offre::where('titre', 'like', "%{$query}%")
             ->limit(10)
             ->get(['id', 'titre']);
-        
+
         return response()->json($offres);
     }
 

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', isset($defaultRole) && $defaultRole === 'responsable_pedagogique' ? 'Nouveau Responsable Pédagogique' : 'Nouvel utilisateur')
-@section('page-title', isset($defaultRole) && $defaultRole === 'responsable_pedagogique' ? 'Nouveau Responsable Pédagogique' : 'Nouvel utilisateur')
+@section('title', isset($defaultRole) && $defaultRole === 'responsable_pedagogique' ? 'Nouveau Chef de Département' : 'Nouvel utilisateur')
+@section('page-title', isset($defaultRole) && $defaultRole === 'responsable_pedagogique' ? 'Nouveau Chef de Département' : 'Nouvel utilisateur')
 
 @section('content')
 <div class="row">

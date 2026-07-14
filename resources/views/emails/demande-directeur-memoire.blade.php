@@ -23,7 +23,7 @@
                     <li>Niveau : {{ $etudiant->niveau_etude }}</li>
                 @endif
                 @if($etudiant->filiere)
-                    <li>Filière : {{ $etudiant->filiere }}</li>
+                    <li>Filière : {{ $etudiant->filiere->nom }}</li>
                 @endif
             </ul>
         </div>
@@ -41,4 +41,3 @@
     </div>
 </body>
 </html>
-

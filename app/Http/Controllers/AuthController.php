@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Mail\InscriptionEnAttente;
 use App\Mail\OtpCodeMail;
 use App\Models\Entreprise;
+use App\Models\Filiere;
 use App\Models\Notification;
 use App\Models\PasswordChangeOtp;
 use App\Models\PendingRegistration;
-use App\Models\RegistrationToken;
+use App\Models\Specialite;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
 
-            if ($user->statut_inscription !== 'valide' || !$user->est_actif) {
+            if ($user->statut_inscription !== 'valide' || ! $user->est_actif) {
                 Auth::logout();
 
                 return back()->withErrors([
@@ -52,26 +53,17 @@ class AuthController extends Controller
 
     public function showRegisterForm()
     {
-        return view('auth.register');
+        $filieres = Filiere::orderBy('nom')->get(['id', 'nom', 'code']);
+        $specialites = Specialite::orderBy('nom')->get(['id', 'nom', 'code']);
+
+        return view('auth.register', compact('filieres', 'specialites'));
     }
 
     public function register(Request $request)
     {
-        $this->validateRegistration($request);
-
-        $token = RegistrationToken::where('token_hash', RegistrationToken::hashToken($request->registration_token))
-            ->where('role', $request->role)
-            ->whereNull('used_at')
-            ->first();
-
-        if (!$token) {
-            return back()
-                ->withErrors(['registration_token' => 'Token invalide, deja utilise ou non compatible avec ce type de compte.'])
-                ->withInput($request->except(['password', 'password_confirmation']));
-        }
+        $payload = $this->validateRegistration($request);
 
         $otp = (string) random_int(100000, 999999);
-        $payload = $request->except(['_token', 'password_confirmation', 'registration_token']);
         $payload['password'] = Hash::make($request->password);
 
         PendingRegistration::where('email', $request->email)->whereNull('consumed_at')->delete();
@@ -79,7 +71,6 @@ class AuthController extends Controller
         $pending = PendingRegistration::create([
             'email' => $request->email,
             'payload' => $payload,
-            'registration_token_id' => $token->id,
             'otp_hash' => Hash::make($otp),
             'otp_expires_at' => now()->addMinutes(5),
         ]);
@@ -89,7 +80,7 @@ class AuthController extends Controller
         try {
             Mail::to($request->email)->send(new OtpCodeMail($otp, 'votre inscription'));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi du OTP d\'inscription : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi du OTP d\'inscription : '.$e->getMessage());
 
             $pending->delete();
             session()->forget('pending_registration_id');
@@ -107,7 +98,7 @@ class AuthController extends Controller
     {
         $pending = PendingRegistration::find(session('pending_registration_id'));
 
-        if (!$pending || $pending->consumed_at) {
+        if (! $pending || $pending->consumed_at) {
             return redirect()->route('register')
                 ->with('error', 'Aucune inscription en attente. Veuillez remplir le formulaire.');
         }
@@ -121,9 +112,9 @@ class AuthController extends Controller
             'otp_code' => 'required|digits:6',
         ]);
 
-        $pending = PendingRegistration::with('registrationToken')->find(session('pending_registration_id'));
+        $pending = PendingRegistration::find(session('pending_registration_id'));
 
-        if (!$pending || $pending->consumed_at) {
+        if (! $pending || $pending->consumed_at) {
             return redirect()->route('register')->with('error', 'Cette demande d\'inscription n\'est plus valide.');
         }
 
@@ -131,20 +122,11 @@ class AuthController extends Controller
             return back()->withErrors(['otp_code' => 'Le code OTP a expire. Veuillez relancer l\'inscription.']);
         }
 
-        if (!Hash::check($request->otp_code, $pending->otp_hash)) {
+        if (! Hash::check($request->otp_code, $pending->otp_hash)) {
             return back()->withErrors(['otp_code' => 'Code OTP incorrect.']);
         }
 
-        if ($pending->registrationToken->isUsed()) {
-            return redirect()->route('register')->with('error', 'Ce token a deja ete utilise.');
-        }
-
         $user = $this->createPendingUser($pending->payload);
-
-        $pending->registrationToken->update([
-            'used_by' => $user->id,
-            'used_at' => now(),
-        ]);
 
         $pending->update(['consumed_at' => now()]);
         session()->forget('pending_registration_id');
@@ -159,7 +141,7 @@ class AuthController extends Controller
     {
         $pending = PendingRegistration::find(session('pending_registration_id'));
 
-        if (!$pending || $pending->consumed_at) {
+        if (! $pending || $pending->consumed_at) {
             return redirect()->route('register')
                 ->with('error', 'Aucune inscription en attente. Veuillez remplir le formulaire.');
         }
@@ -177,7 +159,7 @@ class AuthController extends Controller
         try {
             Mail::to($pending->email)->send(new OtpCodeMail($otp, 'votre inscription'));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors du renvoi du OTP d\'inscription : ' . $e->getMessage());
+            \Log::error('Erreur lors du renvoi du OTP d\'inscription : '.$e->getMessage());
 
             return back()->with('error', 'Impossible de renvoyer le code OTP. Verifiez la configuration email puis reessayez.');
         }
@@ -210,7 +192,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user->est_actif || $user->statut_inscription !== 'valide') {
+        if (! $user->est_actif || $user->statut_inscription !== 'valide') {
             return back()->withErrors(['email' => 'Ce compte n\'est pas actif. Contactez l\'administration.']);
         }
 
@@ -228,19 +210,20 @@ class AuthController extends Controller
         try {
             Mail::to($user->email)->send(new OtpCodeMail($otp, 'la réinitialisation de votre mot de passe'));
         } catch (\Exception $e) {
-            \Log::error('Erreur envoi OTP reset password : ' . $e->getMessage());
+            \Log::error('Erreur envoi OTP reset password : '.$e->getMessage());
+
             return back()->withErrors(['email' => 'Impossible d\'envoyer le code. Vérifiez la configuration email.']);
         }
 
         session(['reset_password_user_id' => $user->id]);
 
         return redirect()->route('password.reset.form')
-            ->with('success', 'Un code OTP a été envoyé à ' . $user->email . '. Il expire dans 10 minutes.');
+            ->with('success', 'Un code OTP a été envoyé à '.$user->email.'. Il expire dans 10 minutes.');
     }
 
     public function showResetPasswordForm()
     {
-        if (!session('reset_password_user_id')) {
+        if (! session('reset_password_user_id')) {
             return redirect()->route('password.request')
                 ->with('error', 'Veuillez d\'abord saisir votre adresse email.');
         }
@@ -252,7 +235,7 @@ class AuthController extends Controller
     {
         $userId = session('reset_password_user_id');
 
-        if (!$userId) {
+        if (! $userId) {
             return redirect()->route('password.request')
                 ->with('error', 'Session expirée. Recommencez la procédure.');
         }
@@ -268,7 +251,7 @@ class AuthController extends Controller
             ->latest()
             ->first();
 
-        if (!$otp) {
+        if (! $otp) {
             return back()->withErrors(['otp_code' => 'Aucune demande de réinitialisation en attente.']);
         }
 
@@ -276,7 +259,7 @@ class AuthController extends Controller
             return back()->withErrors(['otp_code' => 'Le code OTP a expiré. Recommencez la procédure.']);
         }
 
-        if (!Hash::check($request->otp_code, $otp->otp_hash)) {
+        if (! Hash::check($request->otp_code, $otp->otp_hash)) {
             return back()->withErrors(['otp_code' => 'Code OTP incorrect.']);
         }
 
@@ -297,20 +280,19 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:etudiant,entreprise,enseignant',
-            'registration_token' => 'required|string|max:255',
             'telephone' => 'nullable|string|max:20',
             'date_naissance' => 'nullable|date',
         ];
 
         if ($request->role === 'etudiant') {
             $rules['niveau_etude'] = 'required|in:L1,L2,L3,M1,M2';
-            $rules['filiere'] = 'required|string|max:100';
+            $rules['filiere_id'] = 'required|integer|exists:filieres,id';
         } elseif ($request->role === 'entreprise') {
             $rules['nom_entreprise'] = 'required|string|max:255';
             $rules['secteur_activite'] = 'nullable|string|max:255';
             $rules['adresse_entreprise'] = 'nullable|string|max:500';
         } elseif ($request->role === 'enseignant') {
-            $rules['specialite'] = 'nullable|string|max:255';
+            $rules['specialite_id'] = 'required|integer|exists:specialites,id';
         }
 
         return $request->validate($rules);
@@ -320,7 +302,7 @@ class AuthController extends Controller
     {
         $entrepriseId = null;
 
-        if (($payload['role'] ?? null) === 'entreprise' && !empty($payload['nom_entreprise'])) {
+        if (($payload['role'] ?? null) === 'entreprise' && ! empty($payload['nom_entreprise'])) {
             $entreprise = Entreprise::create([
                 'nom' => $payload['nom_entreprise'],
                 'email' => $payload['email'],
@@ -346,7 +328,11 @@ class AuthController extends Controller
 
         if (($payload['role'] ?? null) === 'etudiant') {
             $userData['niveau_etude'] = $payload['niveau_etude'] ?? null;
-            $userData['filiere'] = $payload['filiere'] ?? null;
+            $userData['filiere_id'] = $payload['filiere_id'] ?? null;
+        }
+
+        if (($payload['role'] ?? null) === 'enseignant') {
+            $userData['specialite_id'] = $payload['specialite_id'] ?? null;
         }
 
         if ($entrepriseId) {
@@ -361,7 +347,7 @@ class AuthController extends Controller
         try {
             Mail::to($user->email)->send(new InscriptionEnAttente($user));
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de l\'envoi de l\'email d\'inscription en attente : ' . $e->getMessage());
+            \Log::error('Erreur lors de l\'envoi de l\'email d\'inscription en attente : '.$e->getMessage());
         }
 
         $admins = User::whereIn('role', User::administrativeRoles())->where('est_actif', true)->get();
@@ -370,7 +356,7 @@ class AuthController extends Controller
                 'user_id' => $admin->id,
                 'type' => 'nouvelle_inscription',
                 'titre' => 'Nouvelle inscription en attente',
-                'message' => $user->name . ' (' . $user->email . ') a soumis une demande d\'inscription en tant que ' . ucfirst($user->role) . '.',
+                'message' => $user->name.' ('.$user->email.') a soumis une demande d\'inscription en tant que '.ucfirst($user->role).'.',
                 'lien' => route('users.index'),
             ]);
         }

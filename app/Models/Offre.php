@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Offre extends Model
 {
@@ -11,6 +12,7 @@ class Offre extends Model
 
     protected $fillable = [
         'entreprise_id',
+        'filiere_id',
         'titre',
         'description',
         'missions',
@@ -36,9 +38,14 @@ class Offre extends Model
     }
 
     // Relations
-    public function entreprise()
+    public function entreprise(): BelongsTo
     {
         return $this->belongsTo(Entreprise::class);
+    }
+
+    public function filiere(): BelongsTo
+    {
+        return $this->belongsTo(Filiere::class);
     }
 
     public function candidatures()
@@ -55,6 +62,6 @@ class Offre extends Model
     public function scopeDisponible($query)
     {
         return $query->where('date_limite_candidature', '>=', now())
-                    ->orWhereNull('date_limite_candidature');
+            ->orWhereNull('date_limite_candidature');
     }
 }

@@ -35,14 +35,10 @@ return new class extends Migration
         $this->addIndexIfMissing('notifications', ['created_at']);
         $this->addIndexIfMissing('proposition_themes', ['statut']);
         $this->addIndexIfMissing('proposition_themes', ['envoye_au_directeur']);
-        $this->addIndexIfMissing('registration_tokens', ['role']);
-        $this->addIndexIfMissing('registration_tokens', ['used_at']);
     }
 
     public function down(): void
     {
-        $this->dropIndexIfExists('registration_tokens', ['used_at']);
-        $this->dropIndexIfExists('registration_tokens', ['role']);
         $this->dropIndexIfExists('proposition_themes', ['envoye_au_directeur']);
         $this->dropIndexIfExists('proposition_themes', ['statut']);
         $this->dropIndexIfExists('notifications', ['created_at']);

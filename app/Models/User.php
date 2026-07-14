@@ -3,7 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -11,21 +13,27 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, Notifiable;
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
+
     public const ROLE_ADMIN = 'responsable_pedagogique';
+
     public const ROLE_LEGACY_ADMIN = 'admin';
+
     public const ROLE_ETUDIANT = 'etudiant';
+
     public const ROLE_ENTREPRISE = 'entreprise';
+
     public const ROLE_ENSEIGNANT = 'enseignant';
+
     public const ROLE_RESPONSABLE_STAGES = 'responsable_stages';
 
     public const ROLE_LABELS = [
         self::ROLE_SUPER_ADMIN => 'Super Administrateur',
-        self::ROLE_ADMIN => 'Responsable Pedagogique',
-        self::ROLE_LEGACY_ADMIN => 'Responsable Pedagogique',
+        self::ROLE_ADMIN => 'Chef de Département',
+        self::ROLE_LEGACY_ADMIN => 'Chef de Département',
         self::ROLE_ETUDIANT => 'Etudiant',
         self::ROLE_ENTREPRISE => 'Entreprise',
         self::ROLE_ENSEIGNANT => 'Enseignant',
@@ -52,7 +60,8 @@ class User extends Authenticatable
         'telephone',
         'date_naissance',
         'niveau_etude',
-        'filiere',
+        'filiere_id',
+        'specialite_id',
         'cv_path',
         'photo_path',
         'est_actif',
@@ -110,6 +119,7 @@ class User extends Authenticatable
         if ($this->photo_path) {
             return $this->photo_url;
         }
+
         return null;
     }
 
@@ -117,6 +127,16 @@ class User extends Authenticatable
     public function entreprise()
     {
         return $this->belongsTo(Entreprise::class);
+    }
+
+    public function filiere(): BelongsTo
+    {
+        return $this->belongsTo(Filiere::class);
+    }
+
+    public function specialite(): BelongsTo
+    {
+        return $this->belongsTo(Specialite::class);
     }
 
     public function candidatures()

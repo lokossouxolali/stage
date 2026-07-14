@@ -9,7 +9,7 @@
         <div class="card-body p-4 p-lg-5">
             <div class="mb-4">
                 <h1 class="h4 fw-bold mb-1">Creer un compte</h1>
-                <p class="text-muted mb-0">Selectionnez votre profil, renseignez votre token, puis confirmez votre email par OTP.</p>
+                <p class="text-muted mb-0">Selectionnez votre profil, renseignez vos informations, puis confirmez votre email par OTP.</p>
             </div>
 
             <form method="POST" action="{{ route('register') }}" id="registerForm">
@@ -38,17 +38,6 @@
 
                 <div id="registration-fields" class="registration-fields">
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="registration_token" class="form-label">Token d'inscription *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-ticket-alt"></i></span>
-                                <input type="text" class="form-control @error('registration_token') is-invalid @enderror" id="registration_token" name="registration_token" value="{{ old('registration_token') }}" required>
-                            </div>
-                            @error('registration_token')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-
                         <div class="col-md-6">
                             <label for="name" class="form-label">Nom complet *</label>
                             <div class="input-group">
@@ -103,16 +92,33 @@
                         </div>
 
                         <div class="col-md-6 role-field" data-role-field="etudiant">
-                            <label for="filiere" class="form-label">Filiere *</label>
-                            <input type="text" class="form-control @error('filiere') is-invalid @enderror" id="filiere" name="filiere" value="{{ old('filiere') }}">
-                            @error('filiere')
+                            <label for="filiere_id" class="form-label">Filière *</label>
+                            <select class="form-select @error('filiere_id') is-invalid @enderror" id="filiere_id" name="filiere_id">
+                                <option value="">Sélectionner une filière</option>
+                                @foreach($filieres as $filiere)
+                                    <option value="{{ $filiere->id }}" @selected((string) old('filiere_id') === (string) $filiere->id)>
+                                        {{ $filiere->nom }}@if($filiere->code) ({{ $filiere->code }})@endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('filiere_id')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="col-md-6 role-field" data-role-field="enseignant">
-                            <label for="specialite" class="form-label">Specialite / Departement</label>
-                            <input type="text" class="form-control @error('specialite') is-invalid @enderror" id="specialite" name="specialite" value="{{ old('specialite') }}">
+                            <label for="specialite_id" class="form-label">Spécialité / Département *</label>
+                            <select class="form-select @error('specialite_id') is-invalid @enderror" id="specialite_id" name="specialite_id">
+                                <option value="">Sélectionner une spécialité / un département</option>
+                                @foreach($specialites as $specialite)
+                                    <option value="{{ $specialite->id }}" @selected((string) old('specialite_id') === (string) $specialite->id)>
+                                        {{ $specialite->nom }}@if($specialite->code) ({{ $specialite->code }})@endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('specialite_id')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="col-md-6 role-field" data-role-field="entreprise">
@@ -172,9 +178,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const fieldsWrap = document.getElementById('registration-fields');
     const roleFields = document.querySelectorAll('[data-role-field]');
     const requiredByRole = {
-        etudiant: ['niveau_etude', 'filiere'],
+        etudiant: ['niveau_etude', 'filiere_id'],
         entreprise: ['nom_entreprise'],
-        enseignant: []
+        enseignant: ['specialite_id']
     };
 
     function selectedRole() {

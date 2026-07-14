@@ -32,7 +32,7 @@
                                 <small class="text-muted">{{ $etudiant->email }}</small>
                             </td>
                             <td>{{ $etudiant->niveau_etude ?? '-' }}</td>
-                            <td>{{ $etudiant->filiere ?? '-' }}</td>
+                            <td>{{ $etudiant->filiere?->nom ?? '-' }}</td>
                             <td>{{ $etudiant->propositionsThemes->count() }}</td>
                             <td>{{ $etudiant->candidatures->count() }}</td>
                             <td>

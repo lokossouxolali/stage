@@ -80,7 +80,7 @@
                         
                         <div class="mb-3">
                             <label class="form-label fw-bold">Filière</label>
-                            <p class="form-control-plaintext">{{ $candidature->etudiant->filiere ?? 'Non renseignée' }}</p>
+                            <p class="form-control-plaintext">{{ $candidature->etudiant->filiere?->nom ?? 'Non renseignée' }}</p>
                         </div>
                     </div>
                 </div>
